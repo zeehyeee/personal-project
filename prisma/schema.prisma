@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Pool {
+  id             String   @id @default(cuid())
+  name           String
+  address        String
+  lat            Float
+  lng            Float
+  phone          String?
+  website        String?
+
+  // 풀 스펙
+  laneLength     Int      // 25 or 50 (meters)
+  laneCount      Int      // 전체 레인 수
+  laneBeginners  Int?     // 초급 레인 수
+  laneMedium     Int?     // 중급 레인 수
+  laneAdvanced   Int?     // 상급 레인 수
+  depth          String?  // e.g. "1.2m ~ 1.8m"
+  waterTemp      Int?     // 수온 (°C)
+
+  // 자유수영 정보
+  freeSwimHours  String?  // e.g. "06:00~08:00, 12:00~14:00"
+  price          Int?     // 1회 이용료 (원)
+  bookingMethod  String?  // e.g. "현장접수", "온라인예약", "앱예약"
+
+  // 장비 허용 여부
+  kickboard      Boolean  @default(false)
+  buoy           Boolean  @default(false)
+  paddle         Boolean  @default(false)
+  fins           Boolean  @default(false)
+
+  // 편의시설
+  locker         String?  // e.g. "무료", "유료(100원)", "없음"
+  shower         Boolean  @default(true)
+  parking        Boolean  @default(false)
+
+  lastVerified   DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  reviews        Review[]
+  infoUpdates    InfoUpdate[]
+}
+
+model Review {
+  id            String    @id @default(cuid())
+  poolId        String
+  pool          Pool      @relation(fields: [poolId], references: [id])
+
+  content       String
+  rating        Int
+  visitedAt     DateTime?
+  tags          String    @default("[]")
+
+  passwordHash  String
+  createdAt     DateTime  @default(now())
+
+  @@index([poolId])
+}
+
+model InfoUpdate {
+  id            String   @id @default(cuid())
+  poolId        String
+  pool          Pool     @relation(fields: [poolId], references: [id])
+
+  fieldName     String
+  newValue      String
+  description   String?
+  status        String   @default("pending")
+
+  passwordHash  String
+  createdAt     DateTime @default(now())
+
+  @@index([poolId])
+}
