@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 독립 앱 (운동 기록, 빌드 없는 순수 JS)
+    "workout/**",
   ]),
 ]);
 
