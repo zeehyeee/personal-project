@@ -7,9 +7,14 @@
 
 ```
 workout/
-  index.html        (예정) 단일 HTML 프런트, src/*.js 를 ES 모듈로 불러온다
+  index.html        단일 HTML 프런트, src/*.js 를 ES 모듈로 불러온다
+  styles.css        뼈대 스타일 (위계·구조만, 비주얼 마감은 Claude Design 단계)
+  dev.js            로컬 확인용 정적 서버
   api/extract.js    (예정) Vercel 함수: Claude 비전으로 캡처 추출. API 키는 환경변수에만
-  src/              계산 로직 (브라우저·Node 공용)
+  src/              브라우저·Node 공용 모듈
+    app.js          앱 뼈대: 헤더, 하단 탭, 화면 렌더링
+    store.js        저장소 (지금은 localStorage, 나중에 Sheets로 교체)
+    demo.js         예시 데이터 (source: 'demo', 화면에서 한 번에 지울 수 있음)
     aggregate.js    세션 → 일 합산
     swim.js         수영 구간 기반 페이스·SWOLF, 휴식 구간 제외, 빠진 구간 검사
     streak.js       스트릭, 이번 달 운동일
@@ -20,7 +25,8 @@ workout/
   test/             node --test 단위 테스트
 ```
 
-테스트: `cd workout && npm test` (Node 22, 설치할 것 없음)
+실행: `cd workout && npm run dev` → http://localhost:5173
+테스트: `npm test` (Node 22, 설치할 것 없음)
 
 ## 확정한 결정 (명세 보완)
 
@@ -42,6 +48,6 @@ workout/
 
 ## 남은 확인
 
-- 바다네 곳간의 Sheets 연동 방식 (읽기 전용 공개 CSV인지, Apps Script 웹앱으로 쓰기까지 하는지)
+- 바다네 곳간의 Sheets 연동 방식 (7단계로 미룸. `src/store.js`만 바꾸면 된다) (읽기 전용 공개 CSV인지, Apps Script 웹앱으로 쓰기까지 하는지)
 - 10/6 수영 실제 구간 값: `test/fixtures.js`는 명세의 집계값을 모두 만족하게 **재구성한 값**이라 실제 값으로 교체 필요
 - 습관 지수 공식·목표치

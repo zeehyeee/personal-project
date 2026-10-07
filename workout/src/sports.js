@@ -28,3 +28,11 @@ export const DEFAULT_SETTINGS = {
   monthly_count_goal_bike: 4,
   monthly_count_goal_swim: 8,
 };
+
+// 캘린더·추이 공통 운동량 표기: 걷기=분, 달리기=km, 자전거=분, 수영=m
+export function sportAmount(day) {
+  const unit = SPORT_META[day.sport].unit;
+  if (unit === 'min') return `${Math.round(day.duration_sec / 60)}분`;
+  if (unit === 'km') return `${(day.distance_m / 1000).toFixed(2)}km`;
+  return `${Math.round(day.distance_m)}m`;
+}

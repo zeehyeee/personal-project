@@ -1,0 +1,92 @@
+/* 2-1 뼈대 스타일. 위계·구조만 잡고 비주얼 마감은 Claude Design 단계에서 한다. */
+:root {
+  --bg: #fffaf2;
+  --surface: #ffffff;
+  --text: #22201c;
+  --muted: #8a847a;
+  --line: #eee7db;
+  --accent: #f29a3a;
+  --streak-bg: #fff0dc;
+  --walk: #3fae6a;
+  --run: #f2862f;
+  --bike: #2fb8c9;
+  --swim: #3b78e7;
+  --radius: 16px;
+  --tabbar-h: 64px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.app { max-width: 480px; margin: 0 auto; min-height: 100dvh; }
+
+.header {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 8px;
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  background: var(--bg);
+}
+.header h1 { flex: 1; margin: 0; font-size: 20px; font-weight: 700; }
+.icon-btn {
+  width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent;
+  display: grid; place-items: center;
+}
+.icon-btn:active { background: var(--line); }
+.add-btn {
+  height: 40px; padding: 0 14px; border: 0; border-radius: 12px;
+  background: var(--text); color: #fff; font-weight: 600; font-size: 14px;
+}
+
+main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom)); }
+
+.banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; margin-bottom: 12px; border-radius: 12px;
+  background: var(--streak-bg); font-size: 13px;
+}
+.banner span { flex: 1; }
+.banner button { border: 0; background: transparent; font-weight: 600; color: var(--accent); }
+
+.card { background: var(--surface); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.card h2 { margin: 0 0 4px; font-size: 16px; }
+.muted { color: var(--muted); font-size: 13px; margin: 0; }
+
+.day-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.day-row:first-of-type { border-top: 0; }
+.day-row .date { width: 72px; font-weight: 600; font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px; background: var(--bg); font-size: 13px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.chip small { color: var(--muted); }
+
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; justify-content: center;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar-inner { display: flex; width: 100%; max-width: 480px; }
+.tab {
+  flex: 1; height: var(--tabbar-h); border: 0; background: transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-size: 12px; color: var(--muted);
+}
+.tab[aria-selected="true"] { color: var(--text); font-weight: 600; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 20px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  padding: 10px 16px; border-radius: 999px; background: var(--text); color: #fff; font-size: 13px;
+  white-space: nowrap; opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+.toast.show { opacity: 1; }

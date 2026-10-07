@@ -72,3 +72,11 @@ test('mm:ss 파싱', () => {
   assert.equal(parseClock('1:06:23'), 3983);
   assert.equal(parseClock('abc'), null);
 });
+
+test('종목별 운동량 표기 단위', async () => {
+  const { sportAmount } = await import('../src/sports.js');
+  assert.equal(sportAmount({ sport: 'walk', duration_sec: 1500 }), '25분');
+  assert.equal(sportAmount({ sport: 'run', distance_m: 3490 }), '3.49km');
+  assert.equal(sportAmount({ sport: 'bike', duration_sec: 1200, distance_m: 4300 }), '20분');
+  assert.equal(sportAmount({ sport: 'swim', distance_m: 450 }), '450m');
+});
