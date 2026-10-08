@@ -7,12 +7,15 @@
 
 ```
 workout/
+  vercel.json       정적 사이트로 배포 (https://workout-log-olive.vercel.app)
   index.html        단일 HTML 프런트, src/*.js 를 ES 모듈로 불러온다
   styles.css        뼈대 스타일 (위계·구조만, 비주얼 마감은 Claude Design 단계)
   dev.js            로컬 확인용 정적 서버
   api/extract.js    (예정) Vercel 함수: Claude 비전으로 캡처 추출. API 키는 환경변수에만
   src/              브라우저·Node 공용 모듈
-    app.js          앱 뼈대: 헤더, 하단 탭, 화면 렌더링
+    app.js          앱 뼈대: 헤더, 하단 탭, 화면 전환(#calendar, #trend, #detail/날짜/종목)
+    ui.js           화면 공용 헬퍼 (이스케이프, 아이콘, 수치 표기)
+    views/          화면별 렌더링 (calendar.js, detail.js)
     store.js        저장소 (지금은 localStorage, 나중에 Sheets로 교체)
     demo.js         예시 데이터 (source: 'demo', 화면에서 한 번에 지울 수 있음)
     aggregate.js    세션 → 일 합산

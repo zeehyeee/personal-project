@@ -57,3 +57,14 @@ export function inferDate(month, day, weekdayKo, todayStr) {
   const needsConfirm = Boolean(weekdayKo) && d.getDay() !== WEEKDAYS.indexOf(weekdayKo);
   return { date: toDateStr(d), needsConfirm };
 }
+
+// 월 캘린더 격자: 일~토 주 단위 배열. 앞뒤 달 날짜도 채워 넣는다.
+export function monthGrid(year, month) {
+  const first = toDateStr(new Date(year, month - 1, 1));
+  const last = toDateStr(new Date(year, month, 0));
+  const weeks = [];
+  for (let start = weekStart(first); start <= last; start = addDays(start, 7)) {
+    weeks.push(weekDates(start));
+  }
+  return weeks;
+}

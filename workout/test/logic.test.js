@@ -80,3 +80,13 @@ test('종목별 운동량 표기 단위', async () => {
   assert.equal(sportAmount({ sport: 'bike', duration_sec: 1200, distance_m: 4300 }), '20분');
   assert.equal(sportAmount({ sport: 'swim', distance_m: 450 }), '450m');
 });
+
+test('월 캘린더 격자: 2026년 10월은 5주, 9/27 시작', async () => {
+  const { monthGrid } = await import('../src/dates.js');
+  const weeks = monthGrid(2026, 10);
+  assert.equal(weeks.length, 5);
+  assert.equal(weeks[0][0], '2026-09-27');
+  assert.equal(weeks[4][6], '2026-10-31');
+  // 2026년 2월은 일요일 시작, 28일 → 4주
+  assert.equal(monthGrid(2026, 2).length, 4);
+});

@@ -1,28 +1,28 @@
-// 앱 뼈대: 헤더, 하단 탭(캘린더 / 추이), 저장소 연결.
+// 앱 뼈대: 헤더, 하단 탭(캘린더 / 추이), 화면 전환, 저장소 연결.
+// 화면 주소: #calendar, #trend, #detail/YYYY-MM-DD/sport
 import { createLocalStore, hasDemo, demoIds } from './store.js';
 import { groupByDay, groupLapsBySession } from './aggregate.js';
-import { SPORTS, SPORT_META, sportAmount } from './sports.js';
-import { parseDate } from './dates.js';
+import { toDateStr, monthKey, addMonths } from './dates.js';
+import { ICONS } from './ui.js';
+import { renderCalendar } from './views/calendar.js';
+import { renderDetail } from './views/detail.js';
 
 const store = createLocalStore();
 const root = document.getElementById('app');
 
+const today = toDateStr(new Date());
 const state = {
-  tab: location.hash === '#trend' ? 'trend' : 'calendar',
+  today,
+  selected: today,
+  viewMonth: monthKey(today),
   db: null,
   days: {},
 };
 
-const ICONS = {
-  report: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 15v2M12 11v6M16 8v9"/></svg>',
-  calendar: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
-  trend: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg>',
-};
-
-function formatDateKo(str) {
-  const d = parseDate(str);
-  const wd = '일월화수목금토'[d.getDay()];
-  return `${d.getMonth() + 1}/${d.getDate()} (${wd})`;
+function route() {
+  const [name, ...args] = location.hash.slice(1).split('/');
+  if (name === 'detail' && args.length === 2) return { name, args };
+  return { name: name === 'trend' ? 'trend' : 'calendar', args: [] };
 }
 
 let toastTimer;
@@ -34,48 +34,34 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
 }
 
-// 2-2에서 월 캘린더로 바뀐다. 지금은 저장된 데이터가 일 단위로 합산되는지 확인하는 목록.
-function renderCalendarTab() {
-  const dates = Object.keys(state.days).sort().reverse();
-  if (!dates.length) {
-    return `<section class="card"><h2>아직 기록이 없어요</h2><p class="muted">+ 기록 추가로 첫 운동을 남겨보세요.</p></section>`;
-  }
-  const rows = dates.map((date) => {
-    const chips = SPORTS.filter((s) => state.days[date][s]).map((s) => {
-      const day = state.days[date][s];
-      const multi = day.sessionCount > 1 ? ` <small>${day.sessionCount}세션</small>` : '';
-      return `<span class="chip" style="--c: var(--${s})"><span class="dot"></span>${SPORT_META[s].name} ${sportAmount(day)}${multi}</span>`;
-    });
-    return `<div class="day-row"><div class="date">${formatDateKo(date)}</div><div class="chips">${chips.join('')}</div></div>`;
-  });
-  return `
-    <section class="card">
-      <h2>기록 목록</h2>
-      <p class="muted">다음 단계(2-2)에서 월 캘린더로 바뀌어요.</p>
-      ${rows.join('')}
-    </section>`;
-}
-
-function renderTrendTab() {
+function renderTrend() {
   return `<section class="card"><h2>추이</h2><p class="muted">종목 캐러셀과 막대 그래프는 4단계에서 만들어요.</p></section>`;
 }
 
 function render() {
+  const r = route();
+  const tab = r.name === 'trend' ? 'trend' : 'calendar';
   const demo = state.db && hasDemo(state.db.sessions);
+  let body;
+  if (r.name === 'detail') body = renderDetail(state, ...r.args);
+  else if (r.name === 'trend') body = renderTrend();
+  else body = renderCalendar(state);
+
   root.innerHTML = `
     <div class="app">
+      ${r.name === 'detail' ? '' : `
       <header class="header">
         <h1>운동 기록</h1>
         <button class="icon-btn" data-action="report" aria-label="최신 주간 리포트">${ICONS.report}</button>
         <button class="add-btn" data-action="add">+ 기록 추가</button>
-      </header>
+      </header>`}
       <main>
-        ${demo ? '<div class="banner"><span>예시 데이터로 보는 중이에요.</span><button data-action="clear-demo">예시 지우기</button></div>' : ''}
-        ${state.tab === 'calendar' ? renderCalendarTab() : renderTrendTab()}
+        ${demo && r.name !== 'detail' ? '<div class="banner"><span>예시 데이터로 보는 중이에요.</span><button data-action="clear-demo">예시 지우기</button></div>' : ''}
+        ${body}
       </main>
       <nav class="tabbar"><div class="tabbar-inner" role="tablist">
-        <button class="tab" role="tab" data-tab="calendar" aria-selected="${state.tab === 'calendar'}">${ICONS.calendar}캘린더</button>
-        <button class="tab" role="tab" data-tab="trend" aria-selected="${state.tab === 'trend'}">${ICONS.trend}추이</button>
+        <button class="tab" role="tab" data-tab="calendar" aria-selected="${tab === 'calendar'}">${ICONS.calendar}캘린더</button>
+        <button class="tab" role="tab" data-tab="trend" aria-selected="${tab === 'trend'}">${ICONS.trend}추이</button>
       </div></nav>
       <div class="toast" role="status"></div>
     </div>`;
@@ -87,15 +73,42 @@ async function reload() {
   render();
 }
 
+// 앱 안에서 상세로 들어왔으면 뒤로 가기, 주소로 바로 열었으면 캘린더로
+let navigatedInApp = false;
+
 root.addEventListener('click', async (e) => {
-  const tab = e.target.closest('[data-tab]');
-  if (tab) {
-    state.tab = tab.dataset.tab;
-    history.replaceState(null, '', `#${state.tab}`);
+  const el = (sel) => e.target.closest(sel);
+
+  if (el('[data-tab]')) {
+    location.replace(`#${el('[data-tab]').dataset.tab}`);
+    return;
+  }
+  if (el('[data-month]')) {
+    state.viewMonth = addMonths(state.viewMonth, Number(el('[data-month]').dataset.month));
     render();
     return;
   }
-  const action = e.target.closest('[data-action]')?.dataset.action;
+  if (el('[data-date]')) {
+    state.selected = el('[data-date]').dataset.date;
+    if (monthKey(state.selected) !== state.viewMonth) state.viewMonth = monthKey(state.selected);
+    render();
+    return;
+  }
+  if (el('[data-detail]')) {
+    navigatedInApp = true;
+    location.hash = `detail/${el('[data-detail]').dataset.detail}`;
+    return;
+  }
+  if (el('[data-week]')) {
+    toast('주간 리포트는 5단계에서 만들어요');
+    return;
+  }
+
+  const action = el('[data-action]')?.dataset.action;
+  if (action === 'back') {
+    if (navigatedInApp) history.back();
+    else location.replace('#calendar');
+  }
   if (action === 'add') toast('기록 추가는 2-3 단계에서 만들어요');
   if (action === 'report') toast('주간 리포트는 5단계에서 만들어요');
   if (action === 'clear-demo') {
@@ -103,6 +116,11 @@ root.addEventListener('click', async (e) => {
     await store.deleteSessions(demoIds(state.db.sessions));
     await reload();
   }
+});
+
+window.addEventListener('hashchange', () => {
+  render();
+  window.scrollTo(0, 0);
 });
 
 reload();

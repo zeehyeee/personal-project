@@ -58,16 +58,78 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .card h2 { margin: 0 0 4px; font-size: 16px; }
 .muted { color: var(--muted); font-size: 13px; margin: 0; }
 
-.day-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
-.day-row:first-of-type { border-top: 0; }
-.day-row .date { width: 72px; font-weight: 600; font-size: 14px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: 999px; background: var(--bg); font-size: 13px;
+/* ── 캘린더 ─────────────────────────────── */
+.cal { padding: 12px 8px 8px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 8px; }
+.cal-head h2 { margin: 0; font-size: 17px; }
+.cal-weekdays, .cal-week { display: grid; grid-template-columns: repeat(7, 1fr) 28px; }
+.cal-weekdays span { text-align: center; font-size: 12px; color: var(--muted); padding: 4px 0; }
+.cal-weekdays span:first-child { color: #d9534f; }
+.cal-day {
+  border: 0; background: transparent; padding: 4px 0 6px; min-height: 52px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
-.chip small { color: var(--muted); }
+.cal-day .num {
+  width: 32px; height: 32px; display: grid; place-items: center;
+  border-radius: 50%; border: 2px solid transparent; font-size: 15px;
+}
+.cal-day.other .num { color: #c9c2b6; }
+.cal-day.today .num { background: var(--text); color: #fff; font-weight: 700; }
+.cal-day.selected .num { border-color: var(--accent); }
+.dots { display: flex; gap: 3px; height: 6px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+.week-label {
+  align-self: center; justify-self: center; width: 22px; padding: 6px 0;
+  border: 0; border-radius: 11px; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  font-size: 10px; line-height: 1; color: var(--muted);
+}
+.week-label .v { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: -1px; }
+.week-label:active { color: var(--text); background: var(--line); }
+
+/* ── 스트릭 카드 ────────────────────────── */
+.streak { background: var(--streak-bg); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; }
+.streak-big { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+.streak-sub { margin: 6px 0 0; font-size: 14px; color: #7a6a55; }
+.streak-sub b { color: var(--text); }
+
+/* ── 선택한 날 ──────────────────────────── */
+.day-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.day-head h2 { margin: 0; }
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.tile {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px;
+  text-align: left; border: 0; border-radius: 12px; padding: 12px;
+  background: color-mix(in srgb, var(--c) 10%, white);
+}
+.tile-icon { grid-row: 1 / 3; font-size: 26px; align-self: center; }
+.tile-name { font-size: 13px; color: var(--muted); }
+.tile-amount { font-size: 18px; font-weight: 700; }
+
+/* ── 상세 ───────────────────────────────── */
+.detail-head { display: flex; align-items: center; gap: 10px; padding: calc(8px + env(safe-area-inset-top)) 0 12px; }
+.detail-head h2 { margin: 0; font-size: 20px; }
+.detail-icon {
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 24px;
+  background: color-mix(in srgb, var(--c) 14%, white);
+}
+.primary { display: flex; flex-direction: column; padding: 4px 0 18px; border-bottom: 1px solid var(--line); }
+.primary-value { font-size: 44px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; }
+.secondary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 16px 0; }
+.m { display: flex; flex-direction: column; gap: 2px; }
+.m-value { font-size: 22px; font-weight: 700; }
+.m-value small { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+.m-label { font-size: 13px; color: var(--muted); }
+.sub { list-style: none; margin: 0; padding: 12px 0 0; border-top: 1px solid var(--line); }
+.sub li { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); padding: 3px 0; }
+.note { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.stroke { padding: 14px 0 0; }
+.stroke + .stroke { margin-top: 10px; border-top: 1px solid var(--line); }
+.stroke-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; }
+.stroke-head span { font-size: 13px; color: var(--muted); }
+.bar { height: 6px; border-radius: 3px; background: var(--line); margin: 8px 0 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--c); border-radius: 3px; }
+.stroke .sub { border-top: 0; padding-top: 4px; }
 
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
