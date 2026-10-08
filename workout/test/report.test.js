@@ -59,6 +59,12 @@ test('인사이트: 스트로크 감소, 새 영법, 쉬지 않고 이어 수영
   assert.match(runText, /한 번에 19분 동안 쉬지 않고 달렸어요/);
 });
 
+test('인사이트: 고강도 이상 운동 시간과 평소 대비', () => {
+  // 10/6 수영 고강도 26분. 직전 4주 중 강도 기록 있는 주(10/2 달리기 최대 6+고강도 12=18분)와 비교
+  const t = weeklyReport(days, '2026-10-04', today).insights.map((i) => i.text).join('\n');
+  assert.match(t, /고강도 이상 운동 26분, 평소보다 \+8분이에요/);
+});
+
 test('기간 합계', () => {
   const r = rangeStats(days, '2026-10-02', '2026-10-02');
   assert.equal(r.distance_m, 3490);

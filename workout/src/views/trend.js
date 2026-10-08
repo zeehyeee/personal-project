@@ -2,7 +2,9 @@
 // 종목 칩 → 이번 달 헤드라인(큰 숫자 + 지난달 대비) → 기간 알약 + 막대 그래프 + 선택한 기간
 import { SPORTS, SPORT_META } from '../sports.js';
 import { buildSeries, changeFromPrevious, monthSummary, formatAmount, periodLabel } from '../trend.js';
-import { SPORT_ICON } from '../ui.js';
+import { SPORT_ICON, dateLabelFull } from '../ui.js';
+import { bestRecords } from '../records.js';
+import { monthKey } from '../dates.js';
 
 export const TARGETS = ['all', 'swim', 'run', 'walk', 'bike'];
 const NAME = (t) => (t === 'all' ? '전체' : SPORT_META[t].name);
@@ -24,11 +26,14 @@ function headline(state) {
   const t = state.trend.target;
   const m = monthSummary(state.days, t, state.today);
   const change = m.change == null ? '지난달 기록 없음' : `<span class="chg ${tone(m.change)}">지난달보다 ${pct(m.change)}</span>`;
+  // 종목별 월 목표 횟수(설정): '이번 달 3/8회'
+  const goal = t === 'all' ? 0 : Number(state.db.settings[`monthly_count_goal_${t}`]) || 0;
+  const count = goal ? `<b class="goal ${m.activeDays >= goal ? 'done' : ''}">${m.activeDays}/${goal}회</b>` : `운동 ${m.activeDays}일`;
   return `
     <section class="page-hero">
       <span class="hero-label">이번 달 ${NAME(t)}</span>
       <span class="hero-value">${formatAmount(m.value, m.unit)}</span>
-      <span class="hero-sub">운동 ${m.activeDays}일 · ${change}</span>
+      <span class="hero-sub">${count} · ${change}</span>
     </section>`;
 }
 
@@ -103,8 +108,24 @@ function selection(state, series) {
     </div>`;
 }
 
+// 종목별 역대 최고 기록 (이번 달에 세운 기록은 표시)
+function recordsCard(state) {
+  const t = state.trend.target;
+  if (t === 'all') return '';
+  const list = bestRecords(state.days, t);
+  if (!list.length) return '';
+  const thisMonth = monthKey(state.today);
+  return `
+    <section class="card">
+      <h2>나의 최고 기록</h2>
+      <ul class="sub records">${list.map((r) => `
+        <li><span>${r.label}${monthKey(r.date) === thisMonth ? ' <em class="pr-new">이번 달</em>' : ''}</span>
+        <span><b>${r.text}</b><small>${dateLabelFull(r.date)}</small></span></li>`).join('')}</ul>
+    </section>`;
+}
+
 export function renderTrend(state) {
   const series = buildSeries(state.days, state.trend.target, state.trend.mode, state.today);
   if (state.trend.index == null || state.trend.index >= series.bars.length) state.trend.index = series.bars.length - 1;
-  return chips(state) + headline(state) + chart(state, series);
+  return chips(state) + headline(state) + chart(state, series) + recordsCard(state);
 }

@@ -25,6 +25,13 @@ test('수영: 거리는 m, 반복 횟수를 비우면 거리 ÷ 수영장 길이
   assert.equal(session.duration_sec, 3983);
   assert.equal(session.distance_m, 450);
   assert.equal(session.swim_laps, 18);
+  assert.equal(session.pool_length_m, 25);
+});
+
+test('수영: 어린이풀 길이 입력', () => {
+  const { session } = buildManualSession({ ...base, sport: 'swim', m: '20', distance: '250', pool_length_m: '12.5' });
+  assert.equal(session.pool_length_m, 12.5);
+  assert.equal(session.swim_laps, 20);
 });
 
 test('검증: 종목·시간 누락, 잘못된 숫자', () => {

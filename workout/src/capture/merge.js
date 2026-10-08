@@ -40,7 +40,8 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
 
   // 2) 상세정보: 칼로리·심박 등. 운동 시간이 없는 조각(아래쪽만 캡처)은 그 종목 세션이 하나일 때만 붙인다
   for (const it of items.filter((i) => i.kind === 'detail' && i.sport)) {
-    const { kind, sport, image, duration_sec, pool_length_m, ...rest } = it;
+    const { kind, sport, image, duration_sec, ...rest } = it;
+    if (sport !== 'swim') delete rest.pool_length_m;
     if (sport !== 'run') delete rest.avg_cadence;
     if (duration_sec != null) add(sport, duration_sec, rest, 'detail');
     else {
@@ -111,6 +112,7 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
       avg_cadence: g.sport === 'run' ? f.avg_cadence ?? null : null,
       swim_laps: g.sport === 'swim' ? f.swim_laps ?? null : null,
       swim_total_strokes: g.sport === 'swim' ? f.swim_total_strokes ?? null : null,
+      pool_length_m: g.sport === 'swim' ? f.pool_length_m ?? null : null,
       ...zoneFields(f),
       source: 'capture',
     };

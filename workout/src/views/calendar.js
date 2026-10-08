@@ -2,6 +2,7 @@
 import { SPORTS, SPORT_META } from '../sports.js';
 import { monthGrid, monthKey, weekStart, addDays, weekLabel } from '../dates.js';
 import { weeklyReport } from '../report.js';
+import { recordsOn } from '../records.js';
 import { streak, monthActiveDays } from '../streak.js';
 import { formatMinutes, formatDistance } from '../format.js';
 import { ICONS, SPORT_ICON, dateLabel } from '../ui.js';
@@ -65,7 +66,7 @@ function selectedDayCard(state) {
   // 1줄: 아이콘 + 종목명 / 2줄: 운동 시간(크게) + 거리(작게)
   const tiles = sports.map((s) => `
     <button class="tile" data-detail="${date}/${s}" style="--c: var(--${s})">
-      <span class="tile-name"><span class="tile-icon">${SPORT_ICON[s]}</span>${SPORT_META[s].name}</span>
+      <span class="tile-name"><span class="tile-icon">${SPORT_ICON[s]}</span>${SPORT_META[s].name}${recordsOn(state.days, s, date).length ? '<span class="tile-pr">🏅 신기록</span>' : ''}</span>
       <span class="tile-amount">${formatMinutes(day[s].duration_sec)}<small>${formatDistance(s, day[s].distance_m)}</small></span>
     </button>`).join('');
   return `

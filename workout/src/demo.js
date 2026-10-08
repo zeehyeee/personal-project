@@ -14,7 +14,7 @@ export const SWIM_1006_LAP_ROWS = [
 
 const session = (s) => ({
   start_time: '', distance_m: null, kcal: null, avg_hr: null, avg_cadence: null,
-  swim_laps: null, swim_total_strokes: null,
+  swim_laps: null, swim_total_strokes: null, pool_length_m: null,
   zone_max_min: null, zone_high_min: null, zone_mid_min: null, zone_low_min: null, source: 'demo', ...s,
 });
 
@@ -23,7 +23,7 @@ export function demoData() {
     session({ id: 'demo-r1', date: '2026-10-02', start_time: '19:28', sport: 'run', duration_sec: 1131, distance_m: 2030, kcal: 130, avg_hr: 152, avg_cadence: 140, zone_max_min: 6, zone_high_min: 12, zone_mid_min: 1 }),
     session({ id: 'demo-r2', date: '2026-10-02', start_time: '19:18', sport: 'run', duration_sec: 479, distance_m: 1050 }),
     session({ id: 'demo-r3', date: '2026-10-02', start_time: '19:12', sport: 'run', duration_sec: 281, distance_m: 410 }),
-    session({ id: 'demo-s1006', date: '2026-10-06', start_time: '20:04', sport: 'swim', duration_sec: 3983, distance_m: 450, kcal: 517, avg_hr: 120, swim_laps: 18, swim_total_strokes: 111, zone_high_min: 26, zone_mid_min: 30 }),
+    session({ id: 'demo-s1006', date: '2026-10-06', start_time: '20:04', sport: 'swim', duration_sec: 3983, distance_m: 450, kcal: 517, avg_hr: 120, swim_laps: 18, swim_total_strokes: 111, pool_length_m: 25, zone_high_min: 26, zone_mid_min: 30 }),
     session({ id: 'demo-w1006', date: '2026-10-06', start_time: '21:23', sport: 'walk', duration_sec: 1526, distance_m: 1930, kcal: 92, avg_hr: 119 }),
     session({ id: 'demo-b1006', date: '2026-10-06', start_time: '19:20', sport: 'bike', duration_sec: 706, distance_m: 2360, kcal: 52, avg_hr: 129 }),
   ];

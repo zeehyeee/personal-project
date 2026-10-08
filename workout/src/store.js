@@ -60,6 +60,15 @@ export function createLocalStore(storage = globalThis.localStorage) {
       db.laps = db.laps.filter((l) => !drop.has(l.session_id));
       write(db);
     },
+    // 백업: 시트 연동 전까지 휴대폰 브라우저에만 있으니 파일로 보관할 수 있게
+    async exportAll() {
+      const db = current();
+      return { app: 'workout-log', version: 1, exported_at: new Date().toISOString(), sessions: db.sessions, laps: db.laps, settings: db.settings };
+    },
+    async importAll(data) {
+      if (!data || !Array.isArray(data.sessions) || !Array.isArray(data.laps)) throw new Error('운동 기록 백업 파일이 아니에요.');
+      write({ sessions: data.sessions, laps: data.laps, settings: data.settings ?? {}, demoVersion: DEMO_VERSION });
+    },
     async saveSettings(patch) {
       const db = current();
       db.settings = { ...db.settings, ...patch };

@@ -32,6 +32,18 @@ test('추가·삭제·설정 저장', async () => {
   assert.equal(db.settings.weekly_active_days_goal, 5);
 });
 
+test('백업 내보내기·불러오기', async () => {
+  const a = createLocalStore(memoryStorage());
+  await a.saveSettings({ pool_length_m: 50 });
+  const backup = JSON.parse(JSON.stringify(await a.exportAll()));
+  const b = createLocalStore(memoryStorage());
+  await b.importAll(backup);
+  const db = await b.load();
+  assert.equal(db.sessions.length, backup.sessions.length);
+  assert.equal(db.settings.pool_length_m, 50);
+  await assert.rejects(() => b.importAll({ hello: 1 }));
+});
+
 test('손상된 저장값이면 새로 시작', async () => {
   const storage = memoryStorage();
   storage.setItem('workout-log:v1', '{not json');

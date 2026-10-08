@@ -13,7 +13,7 @@ export const STROKE_NAMES = {
   freestyle: '자유형',
   backstroke: '배영',
   breaststroke: '평영',
-  medley: '혼영',
+  medley: '혼영·기타',
   butterfly: '접영',
 };
 

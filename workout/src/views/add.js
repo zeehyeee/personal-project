@@ -61,6 +61,7 @@ export function renderManual(state) {
       ${field('distance', '거리', 'km', { sports: ['walk', 'run', 'bike'] })}
       ${field('distance', '거리', 'm', { sports: ['swim'], mode: 'numeric' })}
       ${field('kcal', '칼로리', 'kcal', { sports: all, mode: 'numeric' })}
+      ${field('pool_length_m', '수영장 길이', 'm', { sports: ['swim'], hint: `비우면 ${state.db.settings.pool_length_m}m` })}
       ${field('swim_laps', '총 반복횟수', '회', { sports: ['swim'], mode: 'numeric', hint: '비우면 거리로 계산' })}
       ${field('swim_total_strokes', '총 스트로크', '', { sports: ['swim'], mode: 'numeric' })}
       ${field('avg_hr', '평균 심박수', 'bpm', { sports: all, mode: 'numeric' })}

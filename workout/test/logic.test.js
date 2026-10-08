@@ -107,3 +107,12 @@ test('주간 라벨: 토요일이 속한 달 기준', async () => {
   assert.deepEqual(weekLabel('2026-10-04'), { month: 10, week: 2, range: '10.04 ~ 10.10' });
   assert.deepEqual(weekLabel('2026-09-20'), { month: 9, week: 4, range: '09.20 ~ 09.26' });
 });
+
+test('설정 값 검증', async () => {
+  const { parseSetting } = await import('../src/views/settings.js');
+  assert.equal(parseSetting('weekly_active_days_goal', '5'), 5);
+  assert.equal(parseSetting('weekly_active_days_goal', '9'), null);
+  assert.equal(parseSetting('pool_length_m', '12.5'), 12.5);
+  assert.equal(parseSetting('swim_rest_multiplier', '2.25'), 2.3);
+  assert.equal(parseSetting('monthly_count_goal_swim', 'abc'), null);
+});

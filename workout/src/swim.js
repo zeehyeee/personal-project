@@ -24,19 +24,21 @@ export function flagRestLaps(laps, multiplier = 2) {
 // 휴식 표시가 끝난 구간들(여러 세션을 합쳐도 됨)을 요약한다.
 // 반복 횟수·스트로크는 전 구간, 페이스·SWOLF는 휴식 구간을 뺀 값으로 낸다.
 // 시간·스트로크 중 하나가 빠진 구간은 그 값이 필요한 계산에서만 뺀다
+// 구간마다 수영장 길이(pool_m)가 다를 수 있다 (25m 풀, 어린이풀). 없으면 poolLengthM
 function summarize(laps, poolLengthM) {
   const active = laps.filter((l) => !l.rest);
   const has = (v) => v != null;
-  const avgTime = avg(active.filter((l) => has(l.time_sec)).map((l) => l.time_sec));
+  const pool = (l) => l.pool_m || poolLengthM;
+  const pace = avg(active.filter((l) => has(l.time_sec)).map((l) => (l.time_sec / pool(l)) * 100));
   const withStrokes = laps.filter((l) => has(l.strokes));
   const totalStrokes = withStrokes.reduce((a, l) => a + l.strokes, 0);
   return {
     lapCount: laps.length,
-    distanceM: laps.length * poolLengthM,
+    distanceM: laps.reduce((a, l) => a + pool(l), 0),
     restExcluded: laps.length - active.length,
     totalStrokes: withStrokes.length ? totalStrokes : null,
     strokesPerLap: withStrokes.length ? totalStrokes / withStrokes.length : null,
-    pacePer100Sec: avgTime == null ? null : (avgTime / poolLengthM) * 100,
+    pacePer100Sec: pace,
     avgSwolf: avg(active.filter((l) => has(l.time_sec) && has(l.strokes)).map((l) => l.time_sec + l.strokes)),
   };
 }

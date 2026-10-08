@@ -3,6 +3,7 @@
 import { SPORT_META, STROKE_NAMES, ZONE_KEYS, ZONE_META } from '../sports.js';
 import { formatDuration, formatPace } from '../format.js';
 import { flagRestLaps } from '../swim.js';
+import { recordsOn } from '../records.js';
 import { esc, ICONS, SPORT_ICON, dateLabelFull, km, int, dec1 } from '../ui.js';
 
 const metric = (label, value, unit = '') =>
@@ -24,6 +25,7 @@ function levels(day) {
           sub('수영 페이스 (구간 기준)', ls ? `${pace(ls.pacePer100Sec)} /100m` : '-'),
           sub('평균 SWOLF (휴식 제외)', ls ? dec1(ls.avgSwolf) : '-'),
           sub('평균 심박수', day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`),
+          sub('수영장 길이', day.swim.pools.map((p) => `${p}m`).join(' · ')),
         ],
       };
     }
@@ -68,7 +70,10 @@ function strokeSection(day) {
         ${sub('평균 SWOLF', dec1(s.avgSwolf))}
       </ul>
     </div>`).join('');
-  return `<section class="card"><h2>영법별 기록</h2><p class="muted">반복 횟수 기준 비중</p>${rows}</section>`;
+  const medley = ls.byStroke.some((s) => s.stroke === 'medley')
+    ? '<p class="note">혼영·기타: 삼성헬스가 한 영법으로 판단하지 못한 구간이에요. 드릴, 킥, 영법을 섞은 연습 등이 여기에 들어가요.</p>'
+    : '';
+  return `<section class="card"><h2>영법별 기록</h2><p class="muted">반복 횟수 기준 비중</p>${rows}${medley}</section>`;
 }
 
 function lapNote(day) {
@@ -85,6 +90,10 @@ export function renderDetail(state, date, sport) {
     return `<div class="detail">${back}<section class="card"><p class="muted">기록을 찾을 수 없어요.</p></section></div>`;
   }
   const { second, third } = levels(day);
+  const prs = recordsOn(state.days, sport, date);
+  const badges = prs.length
+    ? `<div class="pr-badges">${prs.map((r) => `<span class="pr-badge" title="이전 최고 ${esc(r.previous)}">🏅 ${r.label} 신기록 · ${esc(r.text)}</span>`).join('')}</div>`
+    : '';
   return `
     <div class="detail" style="--c: var(--${sport})">
       <div class="detail-head">
@@ -95,6 +104,7 @@ export function renderDetail(state, date, sport) {
           <p class="muted">${dateLabelFull(date)}${day.sessionCount > 1 ? ` · ${day.sessionCount}세션 합산` : ''}</p>
         </div>
       </div>
+      ${badges}
       <section class="card">
         <div class="primary">
           <span class="m-label">운동 시간</span>

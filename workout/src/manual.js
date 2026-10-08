@@ -22,7 +22,7 @@ export function buildManualSession(form, settings = DEFAULT_SETTINGS, id = crypt
   else if (duration <= 0) errors.duration = '운동 시간을 입력해주세요';
 
   const fields = {};
-  for (const key of ['distance', 'kcal', 'avg_hr', 'avg_cadence', 'swim_laps', 'swim_total_strokes', ...ZONE_KEYS]) {
+  for (const key of ['distance', 'kcal', 'avg_hr', 'avg_cadence', 'swim_laps', 'swim_total_strokes', 'pool_length_m', ...ZONE_KEYS]) {
     const v = num(form[key]);
     if (Number.isNaN(v) || (v != null && v < 0)) errors[key] = '숫자를 확인해주세요';
     fields[key] = Number.isNaN(v) ? null : v;
@@ -30,7 +30,8 @@ export function buildManualSession(form, settings = DEFAULT_SETTINGS, id = crypt
   if (Object.keys(errors).length) return { errors };
 
   const distance_m = fields.distance == null ? null : sport === 'swim' ? fields.distance : Math.round(fields.distance * 1000);
-  const pool = Number(settings.pool_length_m) || 25;
+  // 수영장 길이: 입력값 → 설정의 기본값
+  const pool = fields.pool_length_m || Number(settings.pool_length_m) || 25;
   const session = {
     id,
     date: form.date,
@@ -43,6 +44,7 @@ export function buildManualSession(form, settings = DEFAULT_SETTINGS, id = crypt
     avg_cadence: sport === 'run' ? fields.avg_cadence : null,
     swim_laps: null,
     swim_total_strokes: null,
+    pool_length_m: null,
     ...Object.fromEntries(ZONE_KEYS.map((k) => [k, fields[k]])),
     source: 'manual',
   };
@@ -50,6 +52,7 @@ export function buildManualSession(form, settings = DEFAULT_SETTINGS, id = crypt
     // 반복 횟수를 비우면 거리 ÷ 수영장 길이로 채운다
     session.swim_laps = fields.swim_laps ?? (distance_m ? Math.round(distance_m / pool) : null);
     session.swim_total_strokes = fields.swim_total_strokes;
+    session.pool_length_m = pool;
   }
   return { session };
 }

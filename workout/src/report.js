@@ -4,10 +4,11 @@ import { addDays, weekDates, weekLabel, parseDate } from './dates.js';
 import { habitIndex } from './habit.js';
 import { streak } from './streak.js';
 import { formatPace, formatMinutes } from './format.js';
+import { recordsOn } from './records.js';
 
-// 기간(from~to, to 포함) 합계
+// 기간(from~to, to 포함) 합계. hardMinutes: 고강도 이상(최대+고강도) 분, zoneDays: 강도 기록이 있는 날
 export function rangeStats(days, from, to) {
-  const out = { minutes: 0, activeDays: 0, distance_m: 0, kcal: 0, sports: {} };
+  const out = { minutes: 0, activeDays: 0, distance_m: 0, kcal: 0, hardMinutes: 0, zoneDays: 0, sports: {} };
   for (let d = from; d <= to; d = addDays(d, 1)) {
     const day = days[d];
     if (!day) continue;
@@ -19,6 +20,7 @@ export function rangeStats(days, from, to) {
       out.minutes += x.duration_sec / 60;
       out.distance_m += x.distance_m || 0;
       out.kcal += x.kcal || 0;
+      out.hardMinutes += (x.zone_max_min || 0) + (x.zone_high_min || 0);
       const t = (out.sports[s] ??= { minutes: 0, distance_m: 0, kcal: 0, days: 0 });
       t.minutes += x.duration_sec / 60;
       t.distance_m += x.distance_m || 0;
@@ -26,6 +28,7 @@ export function rangeStats(days, from, to) {
       t.days++;
     }
     if (any) out.activeDays++;
+    if (SPORTS.some((s) => day[s]?.zone_sessions)) out.zoneDays++;
   }
   return out;
 }
@@ -39,7 +42,13 @@ export function weekHabit(days, start, settings = DEFAULT_SETTINGS) {
 function baseline(days, start) {
   const weeks = [1, 2, 3, 4].map((i) => rangeStats(days, addDays(start, -7 * i), addDays(start, -7 * i + 6)));
   const avg = (k) => weeks.reduce((a, w) => a + w[k], 0) / 4;
-  return { minutes: avg('minutes'), activeDays: avg('activeDays'), distance_m: avg('distance_m'), kcal: avg('kcal'), hasData: weeks.some((w) => w.activeDays > 0) };
+  // 강도 평소값은 강도 기록이 있는 주만으로 (강도를 안 올린 주까지 0으로 섞지 않게)
+  const zoneWeeks = weeks.filter((w) => w.zoneDays > 0);
+  return {
+    minutes: avg('minutes'), activeDays: avg('activeDays'), distance_m: avg('distance_m'), kcal: avg('kcal'),
+    hardMinutes: zoneWeeks.length ? zoneWeeks.reduce((a, w) => a + w.hardMinutes, 0) / zoneWeeks.length : null,
+    hasData: weeks.some((w) => w.activeDays > 0),
+  };
 }
 
 export function weeklyReport(days, start, today, settings = DEFAULT_SETTINGS) {
@@ -106,7 +115,8 @@ function insights(days, start, today, cur, base) {
   const wSwim = swimLaps(inWeek);
   if (wSwim.length) {
     const seenStrokes = new Set(swimLaps(before).flatMap((x) => x.swim.lapStats.byStroke.map((b) => b.stroke)));
-    const newStrokes = [...new Set(wSwim.flatMap((x) => x.swim.lapStats.byStroke.map((b) => b.stroke)))].filter((s) => !seenStrokes.has(s));
+    // 혼영은 삼성헬스가 영법을 판단하지 못한 구간(드릴·킥·연습)이라 '새 영법'에서 뺀다
+    const newStrokes = [...new Set(wSwim.flatMap((x) => x.swim.lapStats.byStroke.map((b) => b.stroke)))].filter((s) => s !== 'medley' && !seenStrokes.has(s));
     if (before.some((d) => days[d].swim) && newStrokes.length) push('🆕', `${eul(newStrokes.map((s) => STROKE_NAMES[s] ?? s).join('·'))} 새로 시작했어요.`, 'good', 3);
 
     const strokesPerLap = (list, stroke) => {
@@ -158,6 +168,19 @@ function insights(days, start, today, cur, base) {
     const a = parseDate(firstSwim), b = parseDate(end);
     const months = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() + 1;
     if (months >= 2) push('📅', `수영 ${months}개월차예요.`, 'neutral', 1);
+  }
+
+  // 이번 주 신기록
+  const prs = inWeek.flatMap((d) => SPORTS.flatMap((s) => recordsOn(days, s, d).map((r) => `${SPORT_META[s].name} ${r.label}(${r.text})`)));
+  if (prs.length) push('🏅', `신기록 ${prs.length}개: ${prs.slice(0, 3).join(', ')}${prs.length > 3 ? ' 외' : ''}`, 'good', 4);
+
+  // 운동 강도: 고강도 이상 시간과 평소 대비
+  if (cur.zoneDays) {
+    const h = Math.round(cur.hardMinutes);
+    if (base.hardMinutes != null && Math.abs(h - base.hardMinutes) >= 5) {
+      const d = Math.round(h - base.hardMinutes);
+      push(d > 0 ? '💪' : '🧘', `고강도 이상 운동 ${h}분, 평소보다 ${d > 0 ? '+' : ''}${d}분${d > 0 ? '이에요.' : '이에요. 가볍게 회복한 주예요.'}`, d > 0 ? 'good' : 'neutral', 2);
+    } else if (h > 0) push('💪', `이번 주 고강도 이상 운동 ${h}분이에요.`, 'neutral', 1);
   }
 
   // 습관: 연속 일수, 평소 대비 활동일

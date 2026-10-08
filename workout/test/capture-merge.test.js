@@ -42,6 +42,7 @@ test('수영: 구간 4장(겹침·중복 포함) → 18구간, 검증 경고 없
   assert.equal(swim.laps.length, 18);
   assert.deepEqual(swim.warnings, []);
   assert.equal(swim.session.swim_total_strokes, 111);
+  assert.equal(swim.session.pool_length_m, 25);
   const st = swimLapStats(flagRestLaps(swim.laps), 25);
   assert.equal(formatPace(st.pacePer100Sec), `3'20"`);
   assert.equal(Math.round(st.avgSwolf * 10) / 10, 55.7);

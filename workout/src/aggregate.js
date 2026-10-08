@@ -52,12 +52,15 @@ export function aggregateSessions(sessions, lapsBySession = {}, settings = DEFAU
     const pool = Number(settings.pool_length_m) || 25;
     const mult = Number(settings.swim_rest_multiplier) || 2;
     // 휴식 판정은 세션별 중앙값으로 하고, 요약은 그날 구간 전체로 다시 계산한다.
-    const perSession = sessions.map((s) => flagRestLaps(lapsBySession[s.id] ?? [], mult));
+    // 구간에 그 세션의 수영장 길이를 붙인다 (어린이풀 등 세션마다 다를 수 있다)
+    const perSession = sessions.map((s) => flagRestLaps(lapsBySession[s.id] ?? [], mult)
+      .map((l) => ({ ...l, pool_m: Number(s.pool_length_m) || pool })));
     const laps = perSession.flat();
     result.swim = {
       laps: sum(sessions, 'swim_laps'),
       total_strokes: sum(sessions, 'swim_total_strokes'),
       lapStats: laps.length ? swimLapStats(laps, pool) : null,
+      pools: [...new Set(sessions.map((s) => Number(s.pool_length_m) || pool))],
       // 쉬지 않고 이어서 수영한 최대 구간 수 (세션 안에서만 센다)
       maxContinuousLaps: Math.max(0, ...perSession.map(continuousLaps)),
     };

@@ -393,5 +393,33 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .week-pager::-webkit-scrollbar { display: none; }
 .week-page { flex: 0 0 100%; scroll-snap-align: start; }
 .week-page .week-strip { padding-top: 0; }
-.pager-hint { margin: 10px 0 0; text-align: center; font-size: 12px; color: var(--grey-400); }
 .text-link.inline { margin: 0 0 0 6px; padding: 0; font-size: var(--t7); }
+
+/* ── 신기록 ─────────────────────────────── */
+.pr-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.pr-badge { padding: 6px 12px; border-radius: 999px; background: #fff4d6; color: #8a5a00; font-size: var(--t7); font-weight: 600; }
+.tile-pr { margin-left: auto; font-size: 11px; color: #8a5a00; }
+.records { border-top: 0; padding-top: 4px; }
+.records li { align-items: center; padding: 8px 0; }
+.records li > span:last-child { display: flex; flex-direction: column; align-items: flex-end; }
+.records b { color: var(--text); font-size: var(--t6); }
+.records small { font-size: 11px; color: var(--grey-500); }
+.pr-new { font-style: normal; margin-left: 4px; padding: 2px 6px; border-radius: 6px; background: #fff4d6; color: #8a5a00; font-size: 11px; }
+
+/* ── 설정 ───────────────────────────────── */
+.set-card h2 { margin-bottom: 2px; }
+.set-card > .muted { margin-bottom: 8px; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.set-row:first-of-type { border-top: 0; }
+.set-row b { display: block; font-size: var(--t6); font-weight: 600; }
+.set-row small { display: block; margin-top: 2px; font-size: 12px; color: var(--grey-500); line-height: 1.4; }
+.set-input { flex: none; width: 108px; height: 44px; }
+.set-input input { text-align: right; font-size: var(--t6); }
+.set-btn {
+  display: grid; place-items: center; width: 100%; height: 48px; margin-top: 8px; border: 0; border-radius: var(--radius-btn);
+  background: var(--grey-100); color: var(--grey-800); font-size: var(--t6); font-weight: 600; cursor: pointer;
+}
+.set-btn.danger { color: var(--red-500); }
+.hero-sub .goal { color: var(--text); }
+.hero-sub .goal.done { color: #0b9d58; }
+.header .icon-btn { color: var(--grey-600); }

@@ -70,7 +70,6 @@ export function renderWeekly(state) {
     </section>
     <section class="card">
       <div class="week-pager" id="week-pager" data-weeks="${weeks.join(',')}" aria-label="밀어서 다른 주 보기">${pages}</div>
-      ${isThisWeek ? '<p class="pager-hint">← 밀어서 지난주 보기</p>' : ''}
       <div class="stats">${stats}</div>
       ${r.stats.every((s) => s.diff == null) ? '<p class="muted stats-note">직전 4주 기록이 쌓이면 평소와 비교해 드려요.</p>' : ''}
     </section>

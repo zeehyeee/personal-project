@@ -68,6 +68,16 @@ test('시간 화면만 있으면 페이스는 계산, SWOLF는 없음', () => {
   assert.equal(st.strokesPerLap, null);
 });
 
+test('수영장 길이가 다른 구간: 거리와 페이스를 구간마다 계산', () => {
+  const laps = flagRestLaps([
+    { lap_no: 1, stroke: 'freestyle', time_sec: 50, strokes: 5, pool_m: 25 },
+    { lap_no: 2, stroke: 'freestyle', time_sec: 25, strokes: 3, pool_m: 12.5 },
+  ]);
+  const st = swimLapStats(laps, 25);
+  assert.equal(st.distanceM, 37.5);
+  assert.equal(formatPace(st.pacePer100Sec), `3'20"`); // 둘 다 200초/100m
+});
+
 test('빠진 구간 범위를 찾는다', () => {
   assert.deepEqual(findMissingLaps([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], 18), [[15, 18]]);
   assert.deepEqual(findMissingLaps([1, 3, 4], 6), [[2, 2], [5, 6]]);

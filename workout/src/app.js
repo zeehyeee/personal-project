@@ -12,6 +12,7 @@ import { buildManualSession } from './manual.js';
 import { findDuplicate } from './duplicate.js';
 import { renderCapture } from './views/capture.js';
 import { renderTrend } from './views/trend.js';
+import { renderSettings, parseSetting } from './views/settings.js';
 import { extractImage } from './capture/extract.js';
 import { mergeCaptures } from './capture/merge.js';
 import { createBrowserEngine, fileToGray } from './capture/engine-browser.js';
@@ -35,12 +36,13 @@ const state = {
 const emptyForm = () => ({ sport: '', date: state.selected <= today ? state.selected : today, start_time: '' });
 
 // 헤더 대신 뒤로 가기가 있는 화면
-const SUB_PAGES = ['detail', 'add'];
+const SUB_PAGES = ['detail', 'add', 'settings'];
 
 function route() {
   const [name, ...args] = location.hash.slice(1).split('/');
   if (name === 'detail' && args.length === 2) return { name, args };
   if (name === 'add') return { name, args };
+  if (name === 'settings') return { name, args: [] };
   return { name: ['weekly', 'trend'].includes(name) ? name : 'calendar', args: [] };
 }
 
@@ -63,6 +65,7 @@ function render() {
   else if (r.name === 'add' && r.args[0] === 'manual') body = renderManual(state);
   else if (r.name === 'add' && r.args[0] === 'capture') body = renderCapture(state);
   else if (r.name === 'add') body = renderAddChoice();
+  else if (r.name === 'settings') body = renderSettings(state);
   else if (r.name === 'trend') body = renderTrend(state);
   else if (r.name === 'weekly') body = renderWeekly(state);
   else body = renderCalendar(state);
@@ -72,6 +75,7 @@ function render() {
       ${sub ? '' : `
       <header class="header">
         <h1>운동 기록</h1>
+        <button class="icon-btn" data-action="settings" aria-label="설정">${ICONS.gear}</button>
         <button class="add-btn" data-action="add">+ 기록 추가</button>
       </header>`}
       <main>
@@ -210,6 +214,16 @@ root.addEventListener('click', async (e) => {
   const action = el('[data-action]')?.dataset.action;
   if (action === 'back') goBack();
   if (action === 'add') go('add');
+  if (action === 'settings') go('settings');
+  if (action === 'backup') {
+    const data = await store.exportAll();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
+    a.download = `운동기록-백업-${today}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast('백업 파일을 저장했어요');
+  }
   if (action === 'capture') {
     state.capture = { phase: 'pick' };
     go('add/capture');
@@ -227,6 +241,31 @@ root.addEventListener('click', async (e) => {
 
 // 직접 입력: 종목을 바꾸면 그 종목 칸만 보이게
 root.addEventListener('change', (e) => {
+  // 설정: 바꾸면 바로 저장
+  if (e.target.closest('#settings-form')) {
+    const v = parseSetting(e.target.name, e.target.value);
+    if (v == null) {
+      toast(`${e.target.dataset.min}~${e.target.dataset.max} 사이로 입력해주세요`);
+      e.target.value = state.db.settings[e.target.name];
+      return;
+    }
+    store.saveSettings({ [e.target.name]: v }).then(reload).then(() => toast('저장했어요'));
+    return;
+  }
+  if (e.target.id === 'restore-input' && e.target.files.length) {
+    e.target.files[0].text().then(async (text) => {
+      try {
+        const data = JSON.parse(text);
+        if (!confirm(`백업의 기록 ${data.sessions?.length ?? 0}개로 바꿀까요? 지금 기록은 지워져요.`)) return;
+        await store.importAll(data);
+        await reload();
+        toast('백업을 불러왔어요');
+      } catch (err) {
+        toast(err.message.includes('JSON') ? '백업 파일을 읽지 못했어요' : err.message);
+      }
+    });
+    return;
+  }
   if (e.target.id === 'capture-input' && e.target.files.length) {
     readCaptures([...e.target.files]);
     return;
