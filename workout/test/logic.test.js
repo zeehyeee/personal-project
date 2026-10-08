@@ -90,3 +90,13 @@ test('월 캘린더 격자: 2026년 10월은 5주, 9/27 시작', async () => {
   // 2026년 2월은 일요일 시작, 28일 → 4주
   assert.equal(monthGrid(2026, 2).length, 4);
 });
+
+test('타일용 시간·거리 표기', async () => {
+  const { formatMinutes, formatDistance } = await import('../src/format.js');
+  assert.equal(formatMinutes(1891), '32분');
+  assert.equal(formatMinutes(3983), '1시간 6분');
+  assert.equal(formatMinutes(3600), '1시간');
+  assert.equal(formatDistance('run', 3490), '3.49km');
+  assert.equal(formatDistance('swim', 1025), '1,025m');
+  assert.equal(formatDistance('walk', null), '');
+});

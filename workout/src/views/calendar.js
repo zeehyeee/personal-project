@@ -1,8 +1,9 @@
 // 캘린더 탭: 월 캘린더 → 스트릭 카드 → 선택한 날 블록 (명세 3-2)
-import { SPORTS, SPORT_META, sportAmount } from '../sports.js';
+import { SPORTS, SPORT_META } from '../sports.js';
+import { formatMinutes, formatDistance } from '../format.js';
 import { monthGrid, weekOfMonth, monthKey } from '../dates.js';
 import { streak, monthActiveDays } from '../streak.js';
-import { esc, ICONS, SPORT_ICON, dateLabel } from '../ui.js';
+import { ICONS, SPORT_ICON, dateLabel } from '../ui.js';
 
 function calendarCard(state) {
   const [y, m] = state.viewMonth.split('-').map(Number);
@@ -62,7 +63,7 @@ function selectedDayCard(state) {
     <button class="tile" data-detail="${date}/${s}" style="--c: var(--${s})">
       <span class="tile-icon">${SPORT_ICON[s]}</span>
       <span class="tile-name">${SPORT_META[s].name}</span>
-      <span class="tile-amount">${esc(sportAmount(day[s]))}</span>
+      <span class="tile-amount">${formatMinutes(day[s].duration_sec)}<small>${formatDistance(s, day[s].distance_m)}</small></span>
     </button>`).join('');
   return `
     <section class="card">

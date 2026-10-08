@@ -23,3 +23,18 @@ export function parseClock(text) {
   if (parts.some((n) => !Number.isFinite(n))) return null;
   return parts.reduce((acc, n) => acc * 60 + n, 0);
 }
+
+// 분 단위 짧은 표기 (타일 등 좁은 곳): 32분, 1시간 6분
+export function formatMinutes(sec) {
+  const total = Math.round(sec / 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m}분`;
+  return m ? `${h}시간 ${m}분` : `${h}시간`;
+}
+
+// 거리 표기: 수영은 m, 나머지는 km
+export function formatDistance(sport, meters) {
+  if (meters == null || !(meters > 0)) return '';
+  return sport === 'swim' ? `${Math.round(meters).toLocaleString('ko-KR')}m` : `${(meters / 1000).toFixed(2)}km`;
+}
