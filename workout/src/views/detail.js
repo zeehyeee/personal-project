@@ -104,5 +104,21 @@ export function renderDetail(state, date, sport) {
         ${lapNote(day)}
       </section>
       ${strokeSection(day)}
+      ${sessionList(state, day)}
     </div>`;
+}
+
+const SOURCE = { manual: '직접 입력', capture: '캡처', demo: '예시' };
+
+// 잘못 넣은 기록을 지울 수 있게 세션 단위로 보여준다
+function sessionList(state, day) {
+  const rows = state.db.sessions
+    .filter((s) => day.sessionIds.includes(s.id))
+    .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+    .map((s) => `
+      <li>
+        <span>${s.start_time ? esc(s.start_time) + ' · ' : ''}${formatDuration(s.duration_sec)} · ${SOURCE[s.source] ?? esc(s.source)}</span>
+        <button data-delete="${esc(s.id)}">삭제</button>
+      </li>`).join('');
+  return `<section class="sessions"><p class="muted">기록 ${day.sessionCount}건</p><ul>${rows}</ul></section>`;
 }
