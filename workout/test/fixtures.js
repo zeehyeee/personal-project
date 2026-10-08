@@ -5,14 +5,12 @@ export const run1002 = [
   { id: 'r3', date: '2026-10-02', sport: 'run', duration_sec: 4 * 60 + 41, distance_m: 410, kcal: 30, avg_hr: null },
 ];
 
-// 10/6 수영 18구간. (재구성 값, src/demo.js 참고)
+// 10/6 수영 18구간: 실제 캡처 값 (src/demo.js)
 import { SWIM_1006_LAP_ROWS } from '../src/demo.js';
-const rows = SWIM_1006_LAP_ROWS;
-export const swim1006Laps = rows.map(([lap_no, stroke, time_sec, strokes]) => ({
+export const swim1006Laps = SWIM_1006_LAP_ROWS.map(([lap_no, stroke, time_sec, strokes]) => ({
   session_id: 's1006', lap_no, stroke, time_sec, strokes,
 }));
 export const swim1006Session = {
-  id: 's1006', date: '2026-10-06', sport: 'swim', duration_sec: 66 * 60 + 23,
-  distance_m: 450, kcal: 300, swim_laps: 18, swim_total_strokes: 111,
-  avg_pace_sec: 14 * 60 + 45, swim_avg_swolf: 158,
+  id: 's1006', date: '2026-10-06', sport: 'swim', duration_sec: 3983,
+  distance_m: 450, kcal: 517, swim_laps: 18, swim_total_strokes: 111,
 };

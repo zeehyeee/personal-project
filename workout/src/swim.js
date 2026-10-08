@@ -14,26 +14,30 @@ function avg(values) {
 
 // 세션 하나의 구간에 휴식 여부를 표시한다.
 // 구간 시간이 그 세션 중앙값 × multiplier 를 넘으면 휴식이 섞인 구간이다.
+// 시간이 없는 구간(스트로크 화면만 올린 경우)은 휴식 판정에서 뺀다
 export function flagRestLaps(laps, multiplier = 2) {
-  if (!laps.length) return [];
-  const limit = median(laps.map((l) => l.time_sec)) * multiplier;
-  return laps.map((l) => ({ ...l, rest: l.time_sec > limit }));
+  const times = laps.map((l) => l.time_sec).filter((t) => t != null);
+  const limit = times.length ? median(times) * multiplier : Infinity;
+  return laps.map((l) => ({ ...l, rest: l.time_sec != null && l.time_sec > limit }));
 }
 
 // 휴식 표시가 끝난 구간들(여러 세션을 합쳐도 됨)을 요약한다.
 // 반복 횟수·스트로크는 전 구간, 페이스·SWOLF는 휴식 구간을 뺀 값으로 낸다.
+// 시간·스트로크 중 하나가 빠진 구간은 그 값이 필요한 계산에서만 뺀다
 function summarize(laps, poolLengthM) {
   const active = laps.filter((l) => !l.rest);
-  const avgTime = avg(active.map((l) => l.time_sec));
-  const totalStrokes = laps.reduce((a, l) => a + l.strokes, 0);
+  const has = (v) => v != null;
+  const avgTime = avg(active.filter((l) => has(l.time_sec)).map((l) => l.time_sec));
+  const withStrokes = laps.filter((l) => has(l.strokes));
+  const totalStrokes = withStrokes.reduce((a, l) => a + l.strokes, 0);
   return {
     lapCount: laps.length,
     distanceM: laps.length * poolLengthM,
     restExcluded: laps.length - active.length,
-    totalStrokes,
-    strokesPerLap: laps.length ? totalStrokes / laps.length : null,
+    totalStrokes: withStrokes.length ? totalStrokes : null,
+    strokesPerLap: withStrokes.length ? totalStrokes / withStrokes.length : null,
     pacePer100Sec: avgTime == null ? null : (avgTime / poolLengthM) * 100,
-    avgSwolf: avg(active.map((l) => l.time_sec + l.strokes)),
+    avgSwolf: avg(active.filter((l) => has(l.time_sec) && has(l.strokes)).map((l) => l.time_sec + l.strokes)),
   };
 }
 

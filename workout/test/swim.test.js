@@ -8,7 +8,7 @@ const round1 = (n) => Math.round(n * 10) / 10;
 const flagged = flagRestLaps(swim1006Laps, 2);
 const stats = swimLapStats(flagged, 25);
 
-test('10/6 휴식 구간: 1·10·16·17만 제외 (중앙값 50.5초, 기준 101초)', () => {
+test('10/6 실제 구간: 휴식 1·10·16·17만 제외 (중앙값 50.5초, 기준 101초)', () => {
   const rest = flagged.filter((l) => l.rest).map((l) => l.lap_no);
   assert.deepEqual(rest, [1, 10, 16, 17]);
   assert.equal(stats.restExcluded, 4);
@@ -49,6 +49,23 @@ test('영법별 섹션은 영법이 2개 이상일 때만', () => {
 test('배수를 바꾸면 휴식 판정이 달라진다', () => {
   const loose = flagRestLaps(swim1006Laps, 4).filter((l) => l.rest).map((l) => l.lap_no);
   assert.deepEqual(loose, [1, 16]);
+});
+
+test('스트로크 화면만 있으면(시간 없음) 스트로크만 계산', () => {
+  const only = swim1006Laps.map((l) => ({ ...l, time_sec: null }));
+  const st = swimLapStats(flagRestLaps(only), 25);
+  assert.equal(st.restExcluded, 0);
+  assert.equal(st.totalStrokes, 111);
+  assert.equal(st.pacePer100Sec, null);
+  assert.equal(st.avgSwolf, null);
+});
+
+test('시간 화면만 있으면 페이스는 계산, SWOLF는 없음', () => {
+  const only = swim1006Laps.map((l) => ({ ...l, strokes: null }));
+  const st = swimLapStats(flagRestLaps(only), 25);
+  assert.equal(formatPace(st.pacePer100Sec), `3'20"`);
+  assert.equal(st.avgSwolf, null);
+  assert.equal(st.strokesPerLap, null);
 });
 
 test('빠진 구간 범위를 찾는다', () => {

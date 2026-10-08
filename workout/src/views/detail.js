@@ -44,7 +44,7 @@ function levels(day) {
         ],
         third: [
           sub('평균 심박수', day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`),
-          sub('평균 케이던스', day.avg_cadence == null ? '-' : `${int(day.avg_cadence)} spm`),
+          ...(day.sport === 'run' ? [sub('평균 케이던스', day.avg_cadence == null ? '-' : `${int(day.avg_cadence)} spm`)] : []),
         ],
       };
   }

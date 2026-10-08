@@ -39,20 +39,12 @@ export function buildManualSession(form, settings = DEFAULT_SETTINGS, id = crypt
     duration_sec: duration,
     distance_m,
     kcal: fields.kcal,
-    avg_pace_sec: null,
-    avg_speed_kmh: null,
     avg_hr: fields.avg_hr,
-    avg_cadence: sport === 'run' || sport === 'walk' ? fields.avg_cadence : null,
+    avg_cadence: sport === 'run' ? fields.avg_cadence : null,
     swim_laps: null,
-    swim_avg_swolf: null,
     swim_total_strokes: null,
     source: 'manual',
   };
-  if (distance_m > 0) {
-    if (sport === 'bike') session.avg_speed_kmh = Math.round((distance_m / 1000 / (duration / 3600)) * 10) / 10;
-    else if (sport === 'swim') session.avg_pace_sec = Math.round(duration / (distance_m / 100));
-    else session.avg_pace_sec = Math.round(duration / (distance_m / 1000));
-  }
   if (sport === 'swim') {
     // 반복 횟수를 비우면 거리 ÷ 수영장 길이로 채운다
     session.swim_laps = fields.swim_laps ?? (distance_m ? Math.round(distance_m / pool) : null);

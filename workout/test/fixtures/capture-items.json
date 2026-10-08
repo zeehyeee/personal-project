@@ -1,0 +1,555 @@
+[
+ {
+  "image": "01.png",
+  "kind": "laps",
+  "sport": "swim",
+  "metric": "time",
+  "rows": [
+   {
+    "lap_no": 5,
+    "stroke": "freestyle",
+    "value": 61
+   },
+   {
+    "lap_no": 6,
+    "stroke": "freestyle",
+    "value": 50
+   },
+   {
+    "lap_no": 7,
+    "stroke": "freestyle",
+    "value": 48
+   },
+   {
+    "lap_no": 8,
+    "stroke": "freestyle",
+    "value": 46
+   },
+   {
+    "lap_no": 9,
+    "stroke": "freestyle",
+    "value": 67
+   },
+   {
+    "lap_no": 10,
+    "stroke": "backstroke",
+    "value": 172
+   },
+   {
+    "lap_no": 11,
+    "stroke": "backstroke",
+    "value": 49
+   },
+   {
+    "lap_no": 12,
+    "stroke": "backstroke",
+    "value": 56
+   },
+   {
+    "lap_no": 13,
+    "stroke": "backstroke",
+    "value": 58
+   },
+   {
+    "lap_no": 14,
+    "stroke": "backstroke",
+    "value": 47
+   },
+   {
+    "lap_no": 15,
+    "stroke": "backstroke",
+    "value": 51
+   },
+   {
+    "lap_no": 16,
+    "stroke": "freestyle",
+    "value": 1124
+   },
+   {
+    "lap_no": 17,
+    "stroke": "freestyle",
+    "value": 190
+   },
+   {
+    "lap_no": 18,
+    "stroke": "freestyle",
+    "value": 41
+   }
+  ]
+ },
+ {
+  "image": "02.png",
+  "kind": "daily",
+  "sport": "swim",
+  "date": {
+   "month": 10,
+   "day": 6,
+   "weekday": "화"
+  },
+  "sessionCount": 1,
+  "rows": [
+   {
+    "sport": "swim",
+    "start_time": "20:04",
+    "duration_sec": 3983,
+    "kcal": 517
+   }
+  ]
+ },
+ {
+  "image": "03.png",
+  "kind": "ignored",
+  "sport": "swim"
+ },
+ {
+  "image": "04.png",
+  "kind": "detail",
+  "sport": "swim",
+  "duration_sec": 3983,
+  "distance_m": 450,
+  "kcal": 517,
+  "swim_total_strokes": 111,
+  "pool_length_m": 25,
+  "avg_hr": 120,
+  "swim_laps": 18
+ },
+ {
+  "image": "05.png",
+  "kind": "laps",
+  "sport": "swim",
+  "metric": "time",
+  "rows": [
+   {
+    "lap_no": 1,
+    "stroke": "freestyle",
+    "value": 564
+   },
+   {
+    "lap_no": 2,
+    "stroke": "freestyle",
+    "value": 40
+   },
+   {
+    "lap_no": 3,
+    "stroke": "freestyle",
+    "value": 40
+   },
+   {
+    "lap_no": 4,
+    "stroke": "freestyle",
+    "value": 46
+   },
+   {
+    "lap_no": 5,
+    "stroke": "freestyle",
+    "value": 61
+   },
+   {
+    "lap_no": 6,
+    "stroke": "freestyle",
+    "value": 50
+   },
+   {
+    "lap_no": 7,
+    "stroke": "freestyle",
+    "value": 48
+   },
+   {
+    "lap_no": 8,
+    "stroke": "freestyle",
+    "value": 46
+   },
+   {
+    "lap_no": 9,
+    "stroke": "freestyle",
+    "value": 67
+   },
+   {
+    "lap_no": 10,
+    "stroke": "backstroke",
+    "value": 172
+   },
+   {
+    "lap_no": 11,
+    "stroke": "backstroke",
+    "value": 49
+   },
+   {
+    "lap_no": 12,
+    "stroke": "backstroke",
+    "value": 56
+   },
+   {
+    "lap_no": 13,
+    "stroke": "backstroke",
+    "value": 58
+   },
+   {
+    "lap_no": 14,
+    "stroke": "backstroke",
+    "value": 47
+   }
+  ]
+ },
+ {
+  "image": "06.png",
+  "kind": "laps",
+  "sport": "swim",
+  "metric": "strokes",
+  "rows": [
+   {
+    "lap_no": 1,
+    "stroke": "freestyle",
+    "value": 6
+   },
+   {
+    "lap_no": 2,
+    "stroke": "freestyle",
+    "value": 4
+   },
+   {
+    "lap_no": 3,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 4,
+    "stroke": "freestyle",
+    "value": 4
+   },
+   {
+    "lap_no": 5,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 6,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 7,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 8,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 9,
+    "stroke": "freestyle",
+    "value": 6
+   },
+   {
+    "lap_no": 10,
+    "stroke": "backstroke",
+    "value": 8
+   },
+   {
+    "lap_no": 11,
+    "stroke": "backstroke",
+    "value": 8
+   },
+   {
+    "lap_no": 12,
+    "stroke": "backstroke",
+    "value": 9
+   },
+   {
+    "lap_no": 13,
+    "stroke": "backstroke",
+    "value": 7
+   },
+   {
+    "lap_no": 14,
+    "stroke": "backstroke",
+    "value": 7
+   }
+  ]
+ },
+ {
+  "image": "07.png",
+  "kind": "daily",
+  "sport": "run",
+  "date": {
+   "month": 10,
+   "day": 2,
+   "weekday": "금"
+  },
+  "sessionCount": 3,
+  "rows": [
+   {
+    "sport": "run",
+    "start_time": "19:28",
+    "duration_sec": 1131,
+    "distance_m": 2030
+   },
+   {
+    "sport": "run",
+    "start_time": "19:18",
+    "duration_sec": 479,
+    "distance_m": 1050
+   }
+  ]
+ },
+ {
+  "image": "08.png",
+  "kind": "header",
+  "sport": "run",
+  "date": {
+   "month": 10,
+   "day": 2,
+   "weekday": "금"
+  },
+  "start_time": "19:28",
+  "end_time": "19:50",
+  "duration_sec": null
+ },
+ {
+  "image": "09.png",
+  "kind": "ignored",
+  "sport": "run"
+ },
+ {
+  "image": "10.png",
+  "kind": "detail",
+  "sport": "run",
+  "duration_sec": 1131,
+  "distance_m": 2030,
+  "kcal": 130,
+  "avg_hr": 152,
+  "avg_cadence": 140
+ },
+ {
+  "image": "11.png",
+  "kind": "daily",
+  "sport": "bike",
+  "date": {
+   "month": 10,
+   "day": 6,
+   "weekday": "화"
+  },
+  "sessionCount": 1,
+  "rows": [
+   {
+    "sport": "bike",
+    "start_time": "19:20",
+    "duration_sec": 706,
+    "distance_m": 2360
+   }
+  ]
+ },
+ {
+  "image": "12.png",
+  "kind": "ignored",
+  "sport": "bike"
+ },
+ {
+  "image": "13.png",
+  "kind": "detail",
+  "sport": "bike",
+  "duration_sec": 706,
+  "distance_m": 2360,
+  "kcal": 52,
+  "avg_hr": 129
+ },
+ {
+  "image": "14.png",
+  "kind": "daily",
+  "sport": "walk",
+  "date": {
+   "month": 10,
+   "day": 6,
+   "weekday": "화"
+  },
+  "sessionCount": 1,
+  "rows": [
+   {
+    "sport": "walk",
+    "start_time": "21:23",
+    "duration_sec": 1526,
+    "distance_m": 1930
+   }
+  ]
+ },
+ {
+  "image": "15.png",
+  "kind": "header",
+  "sport": "walk",
+  "date": {
+   "month": 10,
+   "day": 6,
+   "weekday": "화"
+  },
+  "start_time": "21:23",
+  "end_time": "21:51",
+  "duration_sec": 1526
+ },
+ {
+  "image": "16.png",
+  "kind": "detail",
+  "sport": "walk",
+  "duration_sec": 1526,
+  "distance_m": 1930,
+  "kcal": 92,
+  "avg_hr": 119
+ },
+ {
+  "image": "17.png",
+  "kind": "laps",
+  "sport": "swim",
+  "metric": "time",
+  "rows": [
+   {
+    "lap_no": 5,
+    "stroke": "freestyle",
+    "value": 61
+   },
+   {
+    "lap_no": 6,
+    "stroke": "freestyle",
+    "value": 50
+   },
+   {
+    "lap_no": 7,
+    "stroke": "freestyle",
+    "value": 48
+   },
+   {
+    "lap_no": 8,
+    "stroke": "freestyle",
+    "value": 46
+   },
+   {
+    "lap_no": 9,
+    "stroke": "freestyle",
+    "value": 67
+   },
+   {
+    "lap_no": 10,
+    "stroke": "backstroke",
+    "value": 172
+   },
+   {
+    "lap_no": 11,
+    "stroke": "backstroke",
+    "value": 49
+   },
+   {
+    "lap_no": 12,
+    "stroke": "backstroke",
+    "value": 56
+   },
+   {
+    "lap_no": 13,
+    "stroke": "backstroke",
+    "value": 58
+   },
+   {
+    "lap_no": 14,
+    "stroke": "backstroke",
+    "value": 47
+   },
+   {
+    "lap_no": 15,
+    "stroke": "backstroke",
+    "value": 51
+   },
+   {
+    "lap_no": 16,
+    "stroke": "freestyle",
+    "value": 1124
+   },
+   {
+    "lap_no": 17,
+    "stroke": "freestyle",
+    "value": 190
+   },
+   {
+    "lap_no": 18,
+    "stroke": "freestyle",
+    "value": 41
+   }
+  ]
+ },
+ {
+  "image": "18.png",
+  "kind": "laps",
+  "sport": "swim",
+  "metric": "strokes",
+  "rows": [
+   {
+    "lap_no": 5,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 6,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 7,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 8,
+    "stroke": "freestyle",
+    "value": 5
+   },
+   {
+    "lap_no": 9,
+    "stroke": "freestyle",
+    "value": 6
+   },
+   {
+    "lap_no": 10,
+    "stroke": "backstroke",
+    "value": 8
+   },
+   {
+    "lap_no": 11,
+    "stroke": "backstroke",
+    "value": 8
+   },
+   {
+    "lap_no": 12,
+    "stroke": "backstroke",
+    "value": 9
+   },
+   {
+    "lap_no": 13,
+    "stroke": "backstroke",
+    "value": 7
+   },
+   {
+    "lap_no": 14,
+    "stroke": "backstroke",
+    "value": 7
+   },
+   {
+    "lap_no": 15,
+    "stroke": "backstroke",
+    "value": 6
+   },
+   {
+    "lap_no": 16,
+    "stroke": "freestyle",
+    "value": 11
+   },
+   {
+    "lap_no": 17,
+    "stroke": "freestyle",
+    "value": 6
+   },
+   {
+    "lap_no": 18,
+    "stroke": "freestyle",
+    "value": 4
+   }
+  ]
+ }
+]

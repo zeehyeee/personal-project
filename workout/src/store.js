@@ -5,6 +5,8 @@ import { DEFAULT_SETTINGS } from './sports.js';
 import { demoData } from './demo.js';
 
 const KEY = 'workout-log:v1';
+// 예시 데이터를 바꿀 때 올린다 (2: 실제 기록으로 교체)
+const DEMO_VERSION = 2;
 
 export function createLocalStore(storage = globalThis.localStorage) {
   const read = () => {
@@ -22,7 +24,15 @@ export function createLocalStore(storage = globalThis.localStorage) {
     let db = read();
     if (!db) {
       // 처음 열면 예시 데이터를 넣어 화면을 확인할 수 있게 한다
-      db = { ...demoData(), settings: {} };
+      db = { ...demoData(), settings: {}, demoVersion: DEMO_VERSION };
+      write(db);
+    } else if (db.demoVersion !== DEMO_VERSION && db.sessions.some((x) => x.source === 'demo')) {
+      // 예전 예시 데이터는 새 예시로 바꾼다. 직접 입력·캡처 기록은 그대로 둔다
+      const old = new Set(db.sessions.filter((x) => x.source === 'demo').map((x) => x.id));
+      const demo = demoData();
+      db.sessions = [...db.sessions.filter((x) => !old.has(x.id)), ...demo.sessions];
+      db.laps = [...db.laps.filter((l) => !old.has(l.session_id)), ...demo.laps];
+      db.demoVersion = DEMO_VERSION;
       write(db);
     }
     return db;

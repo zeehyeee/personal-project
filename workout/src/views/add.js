@@ -9,7 +9,7 @@ export function renderAddChoice() {
     <div class="page-head">${back}<h2>기록 추가</h2></div>
     <button class="choice" data-action="capture">
       <span class="choice-icon">📷</span>
-      <span><b>캡처로 추가</b><small>삼성헬스 화면 캡처를 올리면 수치를 읽어요 · 준비 중</small></span>
+      <span><b>캡처로 추가</b><small>삼성헬스 캡처를 여러 장 올리면 필요한 수치만 읽어요</small></span>
     </button>
     <button class="choice" data-nav="add/manual">
       <span class="choice-icon">✏️</span>
@@ -64,7 +64,7 @@ export function renderManual(state) {
       ${field('swim_laps', '총 반복횟수', '회', { sports: ['swim'], mode: 'numeric', hint: '비우면 거리로 계산' })}
       ${field('swim_total_strokes', '총 스트로크', '', { sports: ['swim'], mode: 'numeric' })}
       ${field('avg_hr', '평균 심박수', 'bpm', { sports: all, mode: 'numeric' })}
-      ${field('avg_cadence', '평균 케이던스', 'spm', { sports: ['walk', 'run'], mode: 'numeric' })}
+      ${field('avg_cadence', '평균 케이던스', 'spm', { sports: ['run'], mode: 'numeric' })}
 
       <div class="dup" hidden></div>
       <button class="submit" type="submit">저장</button>

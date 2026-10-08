@@ -254,3 +254,19 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
   white-space: nowrap; opacity: 0; transition: opacity .2s; pointer-events: none;
 }
 .toast.show { opacity: 1; }
+
+/* ── 캡처로 추가 ────────────────────────── */
+.pick-btn { display: grid; place-items: center; width: 100%; cursor: pointer; }
+.tips { margin: 16px 0 0; padding-left: 18px; font-size: var(--t7); color: var(--grey-600); line-height: 1.6; }
+.reading-title { margin: 0 0 10px; font-size: var(--t5); font-weight: 700; }
+.reading .muted { margin-top: 8px; }
+.notes { margin: 0 0 12px; padding: 12px 14px 12px 30px; border-radius: 12px; background: var(--orange-50); font-size: var(--t7); color: var(--grey-800); line-height: 1.5; }
+.notes.small { margin: 10px 0 0; }
+.cap-head { display: flex; align-items: center; gap: 8px; font-size: var(--t6); }
+.cap-head input { width: 20px; height: 20px; accent-color: var(--primary); }
+.cap-main { margin: 10px 0 2px; font-size: var(--t2); font-weight: 800; letter-spacing: -0.5px; }
+.cap-card details { margin-top: 12px; }
+.cap-card summary { font-size: var(--t7); color: var(--primary); font-weight: 600; cursor: pointer; }
+.cap-edit { margin-top: 12px; gap: 12px; }
+.text-btn { width: 100%; margin: 4px 0 12px; height: 44px; border: 0; background: transparent; color: var(--grey-600); font-size: var(--t6); }
+#capture-form .submit { width: 100%; margin-bottom: 4px; }

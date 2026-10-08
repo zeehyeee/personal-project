@@ -1,5 +1,5 @@
 // 앱 뼈대: 헤더, 하단 탭(캘린더 / 추이), 화면 전환, 저장소 연결.
-// 화면 주소: #calendar, #weekly, #trend, #detail/YYYY-MM-DD/sport, #add, #add/manual
+// 화면 주소: #calendar, #weekly, #trend, #detail/YYYY-MM-DD/sport, #add, #add/manual, #add/capture
 import { createLocalStore, hasDemo, demoIds } from './store.js';
 import { groupByDay, groupLapsBySession } from './aggregate.js';
 import { toDateStr, monthKey, addMonths, addDays, weekStart } from './dates.js';
@@ -10,6 +10,10 @@ import { renderWeekly } from './views/weekly.js';
 import { renderAddChoice, renderManual, syncManualFields } from './views/add.js';
 import { buildManualSession } from './manual.js';
 import { findDuplicate } from './duplicate.js';
+import { renderCapture } from './views/capture.js';
+import { extractImage } from './capture/extract.js';
+import { mergeCaptures } from './capture/merge.js';
+import { createBrowserEngine, fileToGray } from './capture/engine-browser.js';
 
 const store = createLocalStore();
 const root = document.getElementById('app');
@@ -23,6 +27,7 @@ const state = {
   db: null,
   days: {},
   form: null,
+  capture: { phase: 'pick' },
 };
 
 const emptyForm = () => ({ sport: '', date: state.selected <= today ? state.selected : today, start_time: '' });
@@ -58,6 +63,7 @@ function render() {
   let body;
   if (r.name === 'detail') body = renderDetail(state, ...r.args);
   else if (r.name === 'add' && r.args[0] === 'manual') body = renderManual(state);
+  else if (r.name === 'add' && r.args[0] === 'capture') body = renderCapture(state);
   else if (r.name === 'add') body = renderAddChoice();
   else if (r.name === 'trend') body = renderTrend();
   else if (r.name === 'weekly') body = renderWeekly(state);
@@ -153,7 +159,14 @@ root.addEventListener('click', async (e) => {
   const action = el('[data-action]')?.dataset.action;
   if (action === 'back') goBack();
   if (action === 'add') go('add');
-  if (action === 'capture') toast('캡처로 추가는 3단계에서 만들어요');
+  if (action === 'capture') {
+    state.capture = { phase: 'pick' };
+    go('add/capture');
+  }
+  if (action === 'capture-again') {
+    state.capture = { phase: 'pick' };
+    render();
+  }
   if (action === 'clear-demo') {
     if (!confirm('예시 데이터를 모두 지울까요?')) return;
     await store.deleteSessions(demoIds(state.db.sessions));
@@ -163,6 +176,10 @@ root.addEventListener('click', async (e) => {
 
 // 직접 입력: 종목을 바꾸면 그 종목 칸만 보이게
 root.addEventListener('change', (e) => {
+  if (e.target.id === 'capture-input' && e.target.files.length) {
+    readCaptures([...e.target.files]);
+    return;
+  }
   const form = e.target.closest('#manual-form');
   if (!form) return;
   if (e.target.name === 'sport') {
@@ -211,6 +228,77 @@ root.addEventListener('submit', async (e) => {
   location.replace('#calendar');
   await reload();
   toast('저장했어요');
+});
+
+// 캡처 읽기: 한 장씩 휴대폰 안에서 OCR → 세션으로 합치기 → 확인 화면
+async function readCaptures(files) {
+  const c = (state.capture = { phase: 'reading', total: files.length, done: 0, status: '' });
+  render();
+  try {
+    const engine = await createBrowserEngine((msg) => { c.status = msg; render(); });
+    const items = [];
+    let ignored = 0;
+    for (const file of files) {
+      c.status = '';
+      render();
+      const found = await extractImage(await fileToGray(file), engine);
+      if (found.every((it) => it.kind === 'ignored')) ignored++;
+      items.push(...found);
+      c.done++;
+      render();
+    }
+    const result = mergeCaptures(items, { today });
+    for (const s of result.sessions) s.duplicate = findDuplicate(s.session, state.db.sessions);
+    state.capture = { phase: 'confirm', result: { ...result, ignored, total: files.length } };
+  } catch (err) {
+    state.capture = { phase: 'pick', error: err.message || '캡처를 읽지 못했어요.' };
+  }
+  render();
+}
+
+root.addEventListener('submit', async (e) => {
+  const form = e.target.closest('#capture-form');
+  if (!form) return;
+  e.preventDefault();
+  const values = Object.fromEntries(new FormData(form));
+  const { sessions } = state.capture.result;
+  const toSave = [];
+  const laps = [];
+  let bad = false;
+  sessions.forEach((s, i) => {
+    if (!values[`${i}.on`]) return;
+    const v = (k) => values[`${i}.${k}`] ?? '';
+    // 수정한 값을 직접 입력과 같은 규칙으로 검증한다
+    const { session: edited, errors } = buildManualSession(
+      { sport: s.session.sport, date: v('date'), start_time: v('start_time'), h: v('h'), m: v('m'), s: v('s'), distance: v('distance'), kcal: v('kcal'), avg_hr: v('avg_hr') },
+      state.db.settings, s.session.id,
+    );
+    const errEl = form.querySelector(`[data-error="${i}"]`);
+    if (errors) {
+      bad = true;
+      errEl.textContent = Object.values(errors)[0];
+      errEl.closest('details').open = true;
+      return;
+    }
+    errEl.textContent = '';
+    const { date, start_time, duration_sec, distance_m, kcal, avg_hr } = edited;
+    toSave.push({ ...s.session, date, start_time, duration_sec, distance_m, kcal, avg_hr });
+    laps.push(...s.laps);
+  });
+  if (bad) return;
+  if (!toSave.length) {
+    toast('저장할 기록을 골라주세요');
+    return;
+  }
+  await store.addSessions(toSave, laps);
+  const last = toSave.map((s) => s.date).sort().pop();
+  state.selected = last;
+  state.viewMonth = monthKey(last);
+  state.capture = { phase: 'pick' };
+  navDepth = 0;
+  location.replace('#calendar');
+  await reload();
+  toast(`${toSave.length}개 저장했어요`);
 });
 
 window.addEventListener('hashchange', () => {
