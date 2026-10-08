@@ -94,6 +94,23 @@ function render() {
     chart.addEventListener('scroll', () => { state.trend.scroll = chart.scrollLeft; }, { passive: true });
   }
 
+  // 주간 띠: 고른 주로 맞추고, 밀어서 멈추면 그 주로 바꾼다
+  const pager = root.querySelector('#week-pager');
+  if (pager) {
+    const weeks = pager.dataset.weeks.split(',');
+    pager.scrollLeft = weeks.indexOf(state.weekStart) * pager.clientWidth;
+    let timer;
+    pager.addEventListener('scroll', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const w = weeks[Math.round(pager.scrollLeft / pager.clientWidth)];
+        if (w && w !== state.weekStart) {
+          state.weekStart = w;
+          render();
+        }
+      }, 120);
+    }, { passive: true });
+  }
   // 칩 줄: 고른 칩이 보이게
   root.querySelector('.chips-row [aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
@@ -135,6 +152,11 @@ root.addEventListener('click', async (e) => {
   if (el('[data-date]')) {
     state.selected = el('[data-date]').dataset.date;
     if (monthKey(state.selected) !== state.viewMonth) state.viewMonth = monthKey(state.selected);
+    render();
+    return;
+  }
+  if (el('[data-lap-metric]')) {
+    state.lapMetric = el('[data-lap-metric]').dataset.lapMetric;
     render();
     return;
   }

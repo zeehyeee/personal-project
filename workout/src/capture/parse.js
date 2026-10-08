@@ -1,6 +1,7 @@
 // OCR 글자 → 값 (순수 함수). 삼성헬스 한국어 화면 기준
 import { parseClock } from '../format.js';
 
+
 export function detectSport(text) {
   if (/자전거/.test(text)) return 'bike';
   if (/달리기/.test(text)) return 'run';
@@ -94,6 +95,17 @@ export function parseDetail(pairs) {
     if (v != null && Number.isFinite(v)) out[f.key] = v;
   }
   return out;
+}
+
+// 운동 강도(심박 구간) 화면: `최대 6분`, `고강도 12 분`, `중강도 1 분`
+export const ZONES = [['최대', 'zone_max_min'], ['고강도', 'zone_high_min'], ['중강도', 'zone_mid_min'], ['저강도', 'zone_low_min']];
+export function parseZones(text) {
+  const out = {};
+  for (const [label, key] of ZONES) {
+    const m = text.match(new RegExp(`(?:^|\\n)\\s*${label}\\s+(\\d+)\\s*분`));
+    if (m) out[key] = Number(m[1]);
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 export function parseStroke(text) {

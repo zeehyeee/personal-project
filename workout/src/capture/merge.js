@@ -2,7 +2,7 @@
 // 아무 순서·아무 화면이나 섞여 와도 된다. 같은 종목에서 운동 시간이 같은 값끼리 한 세션으로 묶는다.
 import { inferDate } from '../dates.js';
 import { findMissingLaps } from '../swim.js';
-import { SPORT_META } from '../sports.js';
+import { SPORT_META, ZONE_KEYS } from '../sports.js';
 
 const SAME_DURATION_SEC = 2;
 const near = (a, b) => a != null && b != null && Math.abs(a - b) <= SAME_DURATION_SEC;
@@ -63,6 +63,14 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
     }
   }
 
+  // 3-1) 운동 강도: 시간 정보가 없어 같은 종목 세션 중 강도 합이 운동 시간 안에 드는 세션에 붙인다(여럿이면 가장 긴 세션)
+  for (const it of items.filter((i) => i.kind === 'zones')) {
+    const { kind, sport, image, ...zones } = it;
+    const total = Object.values(zones).reduce((a, b) => a + b, 0);
+    const fits = groups.filter((g) => g.sport === sport && g.duration_sec / 60 + 1 >= total).sort((a, b) => b.duration_sec - a.duration_sec);
+    if (fits[0]) Object.entries(zones).forEach(([k, v]) => { if (fits[0].fields[k] == null) fits[0].fields[k] = v; });
+  }
+
   // 4) 수영 구간: 같은 구간 번호는 합친다 (시간 화면 + 스트로크 화면, 겹치는 스크롤)
   const lapMap = new Map();
   for (const it of items.filter((i) => i.kind === 'laps')) {
@@ -103,6 +111,7 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
       avg_cadence: g.sport === 'run' ? f.avg_cadence ?? null : null,
       swim_laps: g.sport === 'swim' ? f.swim_laps ?? null : null,
       swim_total_strokes: g.sport === 'swim' ? f.swim_total_strokes ?? null : null,
+      ...zoneFields(f),
       source: 'capture',
     };
     let sessionLaps = [];
@@ -118,6 +127,8 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
   sessions.sort((a, b) => (a.session.date + a.session.start_time).localeCompare(b.session.date + b.session.start_time));
   return { sessions, notes };
 }
+
+const zoneFields = (f) => Object.fromEntries(ZONE_KEYS.map((k) => [k, f[k] ?? null]));
 
 function lapWarnings(session, laps) {
   const out = [];

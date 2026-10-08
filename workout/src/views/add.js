@@ -66,6 +66,16 @@ export function renderManual(state) {
       ${field('avg_hr', '평균 심박수', 'bpm', { sports: all, mode: 'numeric' })}
       ${field('avg_cadence', '평균 케이던스', 'spm', { sports: ['run'], mode: 'numeric' })}
 
+      <details class="field-more">
+        <summary>운동 강도 입력 <small>선택</small></summary>
+        <div class="duration zones-input">
+          <span class="field-input"><input name="zone_max_min" inputmode="numeric" placeholder="0"><em>최대</em></span>
+          <span class="field-input"><input name="zone_high_min" inputmode="numeric" placeholder="0"><em>고강도</em></span>
+          <span class="field-input"><input name="zone_mid_min" inputmode="numeric" placeholder="0"><em>중강도</em></span>
+        </div>
+        <p class="muted">삼성헬스 '정보'의 강도별 시간(분)</p>
+      </details>
+
       <div class="dup" hidden></div>
       <button class="submit" type="submit">저장</button>
     </form>`;

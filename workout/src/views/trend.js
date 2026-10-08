@@ -4,7 +4,7 @@ import { SPORTS, SPORT_META } from '../sports.js';
 import { buildSeries, changeFromPrevious, monthSummary, formatAmount, periodLabel } from '../trend.js';
 import { SPORT_ICON } from '../ui.js';
 
-export const TARGETS = ['all', 'walk', 'run', 'bike', 'swim'];
+export const TARGETS = ['all', 'swim', 'run', 'walk', 'bike'];
 const NAME = (t) => (t === 'all' ? '전체' : SPORT_META[t].name);
 const MODES = [['day', '일별'], ['week', '주별'], ['month', '월별']];
 const PREV = { day: '전날', week: '지난주', month: '지난달' };
@@ -42,7 +42,7 @@ function axisLabel(bar, mode, i) {
 function barFill(b, target, scale) {
   if (!(b.value > 0)) return '<span class="tbar-fill empty-fill" style="height:3px"></span>';
   if (target !== 'all') return `<span class="tbar-fill" style="height:${Math.max(6, b.value * scale)}px"></span>`;
-  // 전체: 종목 색으로 쌓기 (아래부터 걷기·달리기·자전거·수영)
+  // 전체: 종목 색으로 쌓기 (아래부터 수영·달리기·걷기·자전거)
   const segs = SPORTS.filter((s) => b.parts[s] > 0)
     .map((s) => `<span class="seg" style="--c: var(--${s}); height:${Math.max(3, b.parts[s] * scale)}px"></span>`).reverse().join('');
   return `<span class="tbar-stack">${segs}</span>`;

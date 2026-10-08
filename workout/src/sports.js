@@ -1,5 +1,6 @@
 // 종목 메타 정보. 캘린더·추이 공통 표기 단위를 여기서 정한다.
-export const SPORTS = ['walk', 'run', 'bike', 'swim'];
+// 화면에 보이는 순서: 주력 종목(수영)부터
+export const SPORTS = ['swim', 'run', 'walk', 'bike'];
 
 export const SPORT_META = {
   walk: { name: '걷기', unit: 'min' },
@@ -14,6 +15,15 @@ export const STROKE_NAMES = {
   breaststroke: '평영',
   medley: '혼영',
   butterfly: '접영',
+};
+
+// 운동 강도(삼성헬스 심박 구간) 분. 높은 강도부터
+export const ZONE_KEYS = ['zone_max_min', 'zone_high_min', 'zone_mid_min', 'zone_low_min'];
+export const ZONE_META = {
+  zone_max_min: { name: '최대', color: '#c4302b' },
+  zone_high_min: { name: '고강도', color: '#f0563f' },
+  zone_mid_min: { name: '중강도', color: '#f6a23a' },
+  zone_low_min: { name: '저강도', color: '#f7cf6b' },
 };
 
 // settings 시트 기본값. 목표치는 임시값이며 설정 화면에서 바꾼다.

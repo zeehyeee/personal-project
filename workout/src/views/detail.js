@@ -1,7 +1,8 @@
 // 종목별 상세 화면 (명세 3-4)
 // 위계: 1순위 운동 시간(단독 한 줄, 가장 크게) → 2순위 2~3개 → 3순위 작고 회색
-import { SPORT_META, STROKE_NAMES } from '../sports.js';
+import { SPORT_META, STROKE_NAMES, ZONE_KEYS, ZONE_META } from '../sports.js';
 import { formatDuration, formatPace } from '../format.js';
+import { flagRestLaps } from '../swim.js';
 import { esc, ICONS, SPORT_ICON, dateLabelFull, km, int, dec1 } from '../ui.js';
 
 const metric = (label, value, unit = '') =>
@@ -103,9 +104,75 @@ export function renderDetail(state, date, sport) {
         <ul class="sub">${third.join('')}</ul>
         ${lapNote(day)}
       </section>
+      ${zoneSection(day)}
       ${strokeSection(day)}
+      ${lapSection(state, day)}
       ${sessionList(state, day)}
     </div>`;
+}
+
+// 운동 강도: 삼성헬스 심박 구간별 시간. 강도 합보다 운동 시간이 길면 나머지는 '그 외'
+function zoneSection(day) {
+  const zones = ZONE_KEYS.filter((k) => day[k] > 0).map((k) => ({ ...ZONE_META[k], min: day[k] }));
+  if (!zones.length) return '';
+  const total = Math.max(day.zone_duration_sec / 60, zones.reduce((a, z) => a + z.min, 0));
+  const partial = day.zone_sessions < day.sessionCount;
+  const rest = Math.max(0, Math.round(total - zones.reduce((a, z) => a + z.min, 0)));
+  const all = rest ? [...zones, { name: '그 외', color: 'var(--grey-200)', min: rest }] : zones;
+  const hard = zones.filter((z) => z.name !== '중강도' && z.name !== '저강도').reduce((a, z) => a + z.min, 0);
+  return `
+    <section class="card">
+      <h2>운동 강도</h2>
+      <p class="muted">${hard ? `고강도 이상 ${hard}분 · 운동 시간의 ${Math.round((hard / total) * 100)}%` : '심박 구간별 시간'}${partial ? ` · ${day.sessionCount}세션 중 ${day.zone_sessions}세션 기준` : ''}</p>
+      <div class="zone-bar">${all.map((z) => `<i style="flex:${z.min}; background:${z.color}"></i>`).join('')}</div>
+      <ul class="sub zone-list">${all.map((z) => `<li><span><i class="zdot" style="background:${z.color}"></i>${z.name}</span><span>${z.min}분</span></li>`).join('')}</ul>
+    </section>`;
+}
+
+// 구간 기록: 삼성헬스 구간 화면처럼 구간마다 영법·값·막대. 시간·스트로크·SWOLF 중 골라 본다
+const LAP_METRICS = [['time', '시간'], ['strokes', '스트로크'], ['swolf', 'SWOLF']];
+const STROKE_COLOR = { freestyle: '#3182f6', backstroke: '#8b5cf6', breaststroke: '#14b8a6', medley: '#f59e0b', butterfly: '#ec4899' };
+const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+function lapSection(state, day) {
+  if (day.sport !== 'swim') return '';
+  const mult = Number(state.db.settings.swim_rest_multiplier) || 2;
+  const sessions = state.db.sessions.filter((s) => day.sessionIds.includes(s.id)).sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+  const groups = sessions.map((s) => ({
+    s,
+    laps: flagRestLaps(state.db.laps.filter((l) => l.session_id === s.id).sort((a, b) => a.lap_no - b.lap_no), mult),
+  })).filter((g) => g.laps.length);
+  if (!groups.length) return '';
+  const metric = state.lapMetric ?? 'time';
+  const val = (l) => (metric === 'time' ? l.time_sec : metric === 'strokes' ? l.strokes : l.time_sec != null && l.strokes != null ? l.time_sec + l.strokes : null);
+  const fmt = (v) => (v == null ? '-' : metric === 'time' ? mmss(v) : String(v));
+  const all = groups.flatMap((g) => g.laps);
+  // 막대 길이·평균·최고는 휴식이 섞인 구간을 빼고 (스트로크는 휴식과 무관하니 전부)
+  const fair = all.filter((l) => val(l) != null && (metric === 'strokes' || !l.rest));
+  const max = Math.max(1, ...fair.map(val));
+  const avg = fair.length ? fair.reduce((a, l) => a + val(l), 0) / fair.length : null;
+  const best = fair.length ? Math.min(...fair.map(val)) : null;
+  const rows = groups.map((g) => `
+    ${groups.length > 1 ? `<li class="lap-sep">${esc(g.s.start_time || '')} 세션</li>` : ''}
+    ${g.laps.map((l) => {
+      const v = val(l);
+      const isRest = l.rest && metric !== 'strokes';
+      const w = v == null ? 0 : Math.min(100, (v / max) * 100);
+      return `<li class="lap ${isRest ? 'rest' : ''}">
+        <span class="lap-no">${l.lap_no}</span>
+        <span class="lap-bar"><i style="width:${w}%; background:${STROKE_COLOR[l.stroke] ?? 'var(--swim)'}"></i><em>${esc(STROKE_NAMES[l.stroke] ?? l.stroke)}</em></span>
+        <span class="lap-val">${fmt(v)}${isRest ? '<small>휴식</small>' : v != null && v === best ? '<small class="best">최고</small>' : ''}</span>
+      </li>`;
+    }).join('')}`).join('');
+  return `
+    <section class="card">
+      <div class="trend-head">
+        <h2>구간 기록</h2>
+        <div class="pills" role="tablist">${LAP_METRICS.map(([k, l]) => `<button role="tab" aria-selected="${k === metric}" data-lap-metric="${k}">${l}</button>`).join('')}</div>
+      </div>
+      <p class="muted">${all.length}구간 · ${avg != null ? `평균 ${fmt(Math.round(avg * 10) / 10 === Math.round(avg) ? Math.round(avg) : Math.round(avg * 10) / 10)}${metric === 'strokes' ? '' : ' (휴식 제외)'}` : ''}</p>
+      <ul class="laps">${rows}</ul>
+    </section>`;
 }
 
 const SOURCE = { manual: '직접 입력', capture: '캡처', demo: '예시' };

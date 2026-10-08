@@ -1,6 +1,6 @@
 // 세션 → 일 단위 합산 (명세 4-1)
 import { flagRestLaps, swimLapStats } from './swim.js';
-import { DEFAULT_SETTINGS } from './sports.js';
+import { DEFAULT_SETTINGS, ZONE_KEYS } from './sports.js';
 
 const has = (v) => v !== null && v !== undefined && v !== '';
 const sum = (rows, key) => rows.reduce((a, r) => a + (has(r[key]) ? Number(r[key]) : 0), 0);
@@ -39,6 +39,11 @@ export function aggregateSessions(sessions, lapsBySession = {}, settings = DEFAU
     speed_kmh: distTime ? distM / 1000 / (distTime / 3600) : null,
     avg_hr: weightedAvg(sessions, 'avg_hr'),
     avg_cadence: weightedAvg(sessions, 'avg_cadence'),
+    // 운동 강도(분): 값이 있는 세션만 더한다. 하나도 없으면 null
+    ...Object.fromEntries(ZONE_KEYS.map((k) => [k, sessions.some((s) => has(s[k])) ? sum(sessions, k) : null])),
+    // 강도 기록이 있는 세션만의 운동 시간·개수 (강도 비율의 기준)
+    zone_duration_sec: sum(sessions.filter((s) => ZONE_KEYS.some((k) => has(s[k]))), 'duration_sec'),
+    zone_sessions: sessions.filter((s) => ZONE_KEYS.some((k) => has(s[k]))).length,
     // 한 번에 가장 오래 한 세션 (멈추면 삼성헬스가 세션을 나눈다 → '쉬지 않고 N분')
     longest_session_sec: Math.max(...sessions.map((s) => Number(s.duration_sec) || 0)),
   };

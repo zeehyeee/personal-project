@@ -98,8 +98,10 @@
  },
  {
   "image": "03.png",
-  "kind": "ignored",
-  "sport": "swim"
+  "kind": "zones",
+  "sport": "swim",
+  "zone_high_min": 26,
+  "zone_mid_min": 30
  },
  {
   "image": "04.png",
@@ -309,8 +311,11 @@
  },
  {
   "image": "09.png",
-  "kind": "ignored",
-  "sport": "run"
+  "kind": "zones",
+  "sport": "run",
+  "zone_max_min": 6,
+  "zone_high_min": 12,
+  "zone_mid_min": 1
  },
  {
   "image": "10.png",

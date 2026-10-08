@@ -3,7 +3,7 @@ import { SPORT_META } from '../sports.js';
 import { weeklyReport } from '../report.js';
 import { formatMinutes } from '../format.js';
 import { SPORT_ICON, esc } from '../ui.js';
-import { addDays, weekStart, weekLabel } from '../dates.js';
+import { addDays, weekStart } from '../dates.js';
 
 const WD = '일월화수목금토';
 
@@ -22,19 +22,29 @@ function habitChart(habit) {
     <polyline points="${pts}"/>${dots}</svg>`;
 }
 
-export function renderWeekly(state) {
-  const r = weeklyReport(state.days, state.weekStart, state.today, state.db.settings);
-  const strip = r.strip.map((d) => `
+// 주 넘기기: 7일 띠를 좌우로 밀어서 (이번 주가 오른쪽 끝, 지난주는 왼쪽 — 추이 그래프와 같은 방향)
+export function pagerWeeks(state) {
+  const thisWeek = weekStart(state.today);
+  let first = addDays(thisWeek, -7 * 11);
+  if (state.weekStart < first) first = state.weekStart;
+  const weeks = [];
+  for (let w = first; w <= thisWeek; w = addDays(w, 7)) weeks.push(w);
+  return weeks;
+}
+
+function stripHtml(state, start) {
+  const r = weeklyReport(state.days, start, state.today, state.db.settings);
+  return `<div class="week-strip">${r.strip.map((d) => `
     <div class="ws-day ${d.level}${d.today ? ' today' : ''}${d.future ? ' future' : ''}">
       <span>${WD[new Date(d.date + 'T00:00').getDay()]}</span><i>${Number(d.date.slice(8))}</i>
-    </div>`).join('');
-  // 주 고르기: 최근 12주 칩 (화살표 대신)
-  const thisWeek = weekStart(state.today);
-  const weeks = Array.from({ length: 12 }, (_, i) => addDays(thisWeek, (i - 11) * 7));
-  const chips = weeks.map((w) => {
-    const l = weekLabel(w);
-    return `<button class="chip-btn" aria-pressed="${w === state.weekStart}" data-open-week="${w}">${w === thisWeek ? '이번 주' : `${l.month}월 ${l.week}주`}</button>`;
-  }).join('');
+    </div>`).join('')}</div>`;
+}
+
+export function renderWeekly(state) {
+  const r = weeklyReport(state.days, state.weekStart, state.today, state.db.settings);
+  const weeks = pagerWeeks(state);
+  const pages = weeks.map((w) => `<div class="week-page">${stripHtml(state, w)}</div>`).join('');
+  const isThisWeek = state.weekStart === weekStart(state.today);
   const top = r.sports[0];
   const stats = r.stats.map((s) => `
     <div class="stat">
@@ -54,13 +64,13 @@ export function renderWeekly(state) {
   const vs = r.vs4 === 0 ? '4주 전과 같아요' : `4주 전보다 <span class="chg ${r.vs4 > 0 ? 'up' : 'down'}">${r.vs4 > 0 ? '+' : ''}${r.vs4}점</span>`;
 
   return `
-    <nav class="chips-row" aria-label="주 선택">${chips}</nav>
     <section class="page-hero">
-      <span class="hero-label">${r.label.month}월 ${r.label.week}주차 · ${r.label.range}</span>
+      <span class="hero-label">${isThisWeek ? '이번 주' : `${r.label.month}월 ${r.label.week}주차`} · ${r.label.range}${isThisWeek ? '' : ` <button class="text-link inline" data-open-week="${weekStart(state.today)}">이번 주로 ›</button>`}</span>
       <span class="hero-title">${top ? `<span class="hero-icon">${SPORT_ICON[top.sport]}</span>` : ''}${esc(r.headline)}</span>
     </section>
     <section class="card">
-      <div class="week-strip">${strip}</div>
+      <div class="week-pager" id="week-pager" data-weeks="${weeks.join(',')}" aria-label="밀어서 다른 주 보기">${pages}</div>
+      ${isThisWeek ? '<p class="pager-hint">← 밀어서 지난주 보기</p>' : ''}
       <div class="stats">${stats}</div>
       ${r.stats.every((s) => s.diff == null) ? '<p class="muted stats-note">직전 4주 기록이 쌓이면 평소와 비교해 드려요.</p>' : ''}
     </section>

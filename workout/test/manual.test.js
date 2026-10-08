@@ -35,6 +35,12 @@ test('검증: 종목·시간 누락, 잘못된 숫자', () => {
   assert.ok(buildManualSession({ ...base, sport: 'walk' }).errors.duration);
 });
 
+test('운동 강도(분) 선택 입력', () => {
+  const { session } = buildManualSession({ ...base, sport: 'run', m: '20', zone_high_min: '12', zone_mid_min: '' });
+  assert.equal(session.zone_high_min, 12);
+  assert.equal(session.zone_mid_min, null);
+});
+
 test('거리 없이 시간만 입력해도 저장', () => {
   const { session } = buildManualSession({ ...base, sport: 'walk', m: '25' });
   assert.equal(session.distance_m, null);

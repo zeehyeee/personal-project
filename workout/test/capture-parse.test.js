@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseDaily, parseHeader, parseDetail, parseKoDate, parseStroke, repairLapNumbers, detectSport } from '../src/capture/parse.js';
+import { parseDaily, parseHeader, parseDetail, parseKoDate, parseStroke, repairLapNumbers, detectSport, parseZones } from '../src/capture/parse.js';
 
 // 아래 글자는 실제 캡처를 2배 확대해 OCR한 결과
 test('전체보기: 날짜와 세션 줄', () => {
@@ -47,6 +47,13 @@ test('상세정보: 필요한 값만 가져온다', () => {
     { label: '평균 케이던스', value: '140 spm' },
   ]);
   assert.deepEqual(r, { duration_sec: 1131, distance_m: 2030, kcal: 130, avg_hr: 152, avg_cadence: 140 });
+});
+
+test('운동 강도 화면 (실제 OCR)', () => {
+  assert.deepEqual(parseZones('시간 (분)   정보\n최대                  6분\n고강도                 12 분\n중강도                 1 분'),
+    { zone_max_min: 6, zone_high_min: 12, zone_mid_min: 1 });
+  assert.deepEqual(parseZones('고강도                  26 분\n중강도                  30 분'), { zone_high_min: 26, zone_mid_min: 30 });
+  assert.equal(parseZones('최대 심박수\n168 bpm'), null);
 });
 
 test('영법, 종목 인식', () => {

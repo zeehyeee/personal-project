@@ -5,8 +5,8 @@ import { DEFAULT_SETTINGS } from './sports.js';
 import { demoData } from './demo.js';
 
 const KEY = 'workout-log:v1';
-// 예시 데이터를 바꿀 때 올린다 (2: 실제 기록으로 교체)
-const DEMO_VERSION = 2;
+// 예시 데이터를 바꿀 때 올린다 (2: 실제 기록으로 교체, 3: 운동 강도 추가)
+const DEMO_VERSION = 3;
 
 export function createLocalStore(storage = globalThis.localStorage) {
   const read = () => {

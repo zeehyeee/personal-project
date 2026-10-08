@@ -35,7 +35,7 @@ test('습관 지수: 6주, 이번 주 점수', () => {
 
 test('인사이트: 처음 생긴 종목, 첫 운동 안내', () => {
   const r = weeklyReport(days, '2026-10-04', today);
-  assert.ok(r.insights.some((i) => i.text === '걷기·자전거·수영 기록이 처음 생겼어요.'));
+  assert.ok(r.insights.some((i) => i.text === '수영·걷기·자전거 기록이 처음 생겼어요.'));
   assert.ok(r.insights.length <= 4);
   const empty = weeklyReport(days, '2026-09-20', today);
   assert.equal(empty.headline, '쉬어간 한 주');

@@ -2,7 +2,7 @@
 // engine.ocr(gray, { lang: 'kor'|'eng'|'kor+eng', psm, whitelist }) → { text, lines: [{ text, bbox:{x0,y0,x1,y1} }] }
 // 1) 원래 크기로 한 번 읽어 화면 종류와 줄 위치를 찾고 2) 필요한 부분만 2배로 다시 읽는다.
 import { crop, threshold, scale, pad, rowBands } from './image.js';
-import { detectSport, parseDaily, parseHeader, parseDetail, parseStroke, repairLapNumbers } from './parse.js';
+import { detectSport, parseDaily, parseHeader, parseDetail, parseStroke, repairLapNumbers, parseZones } from './parse.js';
 import { readDigits } from './digits.js';
 import { parseClock } from '../format.js';
 
@@ -62,6 +62,10 @@ export async function extractImage(input, engine) {
   } else if (/운동\s*시간|운동\s*칼로리|평균\s*심박|총\s*스트로크/.test(text)) {
     items.push({ kind: 'detail', sport, ...(await extractDetail(gray, engine, sport)) });
   }
+
+  // 운동 강도(최대·고강도·중강도) 줄은 그래프 화면에 있다. 다른 내용과 함께 있어도 따로 가져온다
+  const zones = parseZones(text);
+  if (zones && sport) items.push({ kind: 'zones', sport, ...zones });
 
   if (!items.length) items.push({ kind: 'ignored', sport });
   return items;

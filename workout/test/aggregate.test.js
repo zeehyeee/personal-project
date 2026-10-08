@@ -42,6 +42,14 @@ test('가장 긴 한 세션, 쉬지 않고 이어 수영한 구간 수', () => {
   assert.equal(swim.swim.maxContinuousLaps, 8); // 구간 2~9 (1·10은 휴식)
 });
 
+test('운동 강도: 기록 있는 세션만 기준', () => {
+  const day = aggregateSessions([{ ...run1002[0], zone_high_min: 12, zone_max_min: 6 }, run1002[1]]);
+  assert.equal(day.zone_high_min, 12);
+  assert.equal(day.zone_mid_min, null);
+  assert.equal(day.zone_duration_sec, 1131);
+  assert.equal(day.zone_sessions, 1);
+});
+
 test('groupByDay는 날짜·종목별로 묶는다', () => {
   const days = groupByDay(
     [...run1002, swim1006Session],

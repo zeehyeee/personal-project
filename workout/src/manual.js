@@ -1,5 +1,5 @@
 // 직접 입력 폼 값 → sessions 행. 화면과 분리해 테스트한다.
-import { DEFAULT_SETTINGS } from './sports.js';
+import { DEFAULT_SETTINGS, ZONE_KEYS } from './sports.js';
 
 const num = (v) => {
   if (v === '' || v == null) return null;
@@ -22,7 +22,7 @@ export function buildManualSession(form, settings = DEFAULT_SETTINGS, id = crypt
   else if (duration <= 0) errors.duration = '운동 시간을 입력해주세요';
 
   const fields = {};
-  for (const key of ['distance', 'kcal', 'avg_hr', 'avg_cadence', 'swim_laps', 'swim_total_strokes']) {
+  for (const key of ['distance', 'kcal', 'avg_hr', 'avg_cadence', 'swim_laps', 'swim_total_strokes', ...ZONE_KEYS]) {
     const v = num(form[key]);
     if (Number.isNaN(v) || (v != null && v < 0)) errors[key] = '숫자를 확인해주세요';
     fields[key] = Number.isNaN(v) ? null : v;
@@ -43,6 +43,7 @@ export function buildManualSession(form, settings = DEFAULT_SETTINGS, id = crypt
     avg_cadence: sport === 'run' ? fields.avg_cadence : null,
     swim_laps: null,
     swim_total_strokes: null,
+    ...Object.fromEntries(ZONE_KEYS.map((k) => [k, fields[k]])),
     source: 'manual',
   };
   if (sport === 'swim') {

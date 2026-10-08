@@ -361,3 +361,37 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .report-card small { display: block; margin-top: 2px; font-size: var(--t7); color: var(--grey-600); }
 .report-card > span:nth-child(2) { flex: 1; }
 .report-icon { color: var(--primary); }
+
+/* ── 상세: 운동 강도 ─────────────────────── */
+.zone-bar { display: flex; gap: 2px; height: 12px; margin: 14px 0 6px; border-radius: 6px; overflow: hidden; }
+.zone-bar i { display: block; min-width: 3px; }
+.zone-list { border-top: 0; padding-top: 4px; }
+.zdot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+
+/* ── 상세: 구간 기록 ─────────────────────── */
+.laps { list-style: none; margin: 10px 0 0; padding: 0; }
+.lap { display: grid; grid-template-columns: 28px 1fr 64px; align-items: center; gap: 10px; height: 34px; font-size: var(--t7); }
+.lap-no { color: var(--grey-500); text-align: right; }
+.lap-bar { position: relative; height: 24px; display: flex; align-items: center; }
+.lap-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; opacity: 0.22; }
+.lap-bar em { position: relative; padding-left: 8px; font-style: normal; color: var(--grey-800); }
+.lap-val { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lap-val small { display: block; font-size: 10px; font-weight: 500; color: var(--grey-500); line-height: 1; }
+.lap-val small.best { color: var(--primary); }
+.lap.rest .lap-bar i { opacity: 0.1; }
+.lap.rest .lap-val { color: var(--grey-500); }
+.lap-sep { margin: 10px 0 4px; font-size: 12px; color: var(--grey-500); }
+
+/* 직접 입력: 접어 둔 선택 입력 */
+.field-more summary { font-size: var(--t7); color: var(--grey-600); cursor: pointer; }
+.field-more summary small { color: var(--grey-400); }
+.field-more .zones-input { margin-top: 10px; }
+.field-more .muted { margin-top: 6px; }
+
+/* 주간: 밀어서 넘기는 7일 띠 */
+.week-pager { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.week-pager::-webkit-scrollbar { display: none; }
+.week-page { flex: 0 0 100%; scroll-snap-align: start; }
+.week-page .week-strip { padding-top: 0; }
+.pager-hint { margin: 10px 0 0; text-align: center; font-size: 12px; color: var(--grey-400); }
+.text-link.inline { margin: 0 0 0 6px; padding: 0; font-size: var(--t7); }

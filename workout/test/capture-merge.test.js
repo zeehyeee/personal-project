@@ -49,6 +49,16 @@ test('수영: 구간 4장(겹침·중복 포함) → 18구간, 검증 경고 없
   assert.equal(day.swim.lapStats.byStroke.find((b) => b.stroke === 'backstroke').lapCount, 6);
 });
 
+test('운동 강도: 그래프 화면에서 읽어 맞는 세션에 붙인다', () => {
+  const { sessions } = run(items);
+  const swim = sessions.find((s) => s.session.sport === 'swim').session;
+  assert.deepEqual([swim.zone_max_min, swim.zone_high_min, swim.zone_mid_min], [null, 26, 30]);
+  // 달리기 강도 합 19분 → 18분 51초 세션에 (7분 59초 세션에는 들어가지 않음)
+  const runs = sessions.filter((s) => s.session.sport === 'run').map((s) => s.session);
+  assert.deepEqual(runs.find((r) => r.duration_sec === 1131).zone_high_min, 12);
+  assert.equal(runs.find((r) => r.duration_sec === 479).zone_high_min, null);
+});
+
 test('구간 화면 일부만 올리면 빠진 구간 안내', () => {
   const partial = items.filter((i) => !(i.kind === 'laps' && ['01.png', '17.png', '18.png'].includes(i.image)));
   const swim = run(partial).sessions.find((s) => s.session.sport === 'swim');
