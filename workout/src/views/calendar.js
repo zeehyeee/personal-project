@@ -9,7 +9,8 @@ function streakLine(state) {
   const active = Object.keys(state.days);
   const s = streak(active, state.today);
   const monthDays = monthActiveDays(active, state.today);
-  const goal = state.db.settings.monthly_active_days_goal;
+  // 분모는 오늘 날짜(이번 달 지난 날 수): 매일 운동이 목표라서
+  const elapsed = Number(state.today.slice(8));
   let main;
   if (s.days === 0) main = '오늘 운동하면 <b>1일차</b>';
   else if (s.untilYesterday) main = `어제까지 <b>${s.days}일</b> · 오늘도 이어가요`;
@@ -17,7 +18,7 @@ function streakLine(state) {
   return `
     <section class="streak">
       <span class="streak-main">🔥 ${main}</span>
-      <span class="streak-month">이번 달 <b>${monthDays}</b>/${goal}일</span>
+      <span class="streak-month">이번 달 <b>${monthDays}</b>/${elapsed}일</span>
     </section>`;
 }
 
