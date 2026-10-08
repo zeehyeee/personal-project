@@ -1,6 +1,7 @@
 // 캘린더 탭: 스트릭 한 줄 → 월 캘린더 → 선택한 날 블록
 import { SPORTS, SPORT_META } from '../sports.js';
-import { monthGrid, monthKey } from '../dates.js';
+import { monthGrid, monthKey, weekStart, addDays, weekLabel } from '../dates.js';
+import { weeklyReport } from '../report.js';
 import { streak, monthActiveDays } from '../streak.js';
 import { formatMinutes, formatDistance } from '../format.js';
 import { ICONS, SPORT_ICON, dateLabel } from '../ui.js';
@@ -74,6 +75,20 @@ function selectedDayCard(state) {
     </section>`;
 }
 
+// 지난주에 운동했으면 '리포트 도착' 카드 → 주간 탭
+function reportCard(state) {
+  const start = addDays(weekStart(state.today), -7);
+  const r = weeklyReport(state.days, start, state.today, state.db.settings);
+  if (!r.sports.length) return '';
+  const { month, week } = weekLabel(start);
+  return `
+    <button class="report-card" data-open-week="${start}">
+      <span class="report-icon">${ICONS.week}</span>
+      <span><b>${month}월 ${week}주차 리포트가 도착했어요</b><small>${r.headline} · 습관 지수 ${r.score}점</small></span>
+      <span>${ICONS.right}</span>
+    </button>`;
+}
+
 export function renderCalendar(state) {
-  return streakLine(state) + calendarCard(state) + selectedDayCard(state);
+  return streakLine(state) + calendarCard(state) + selectedDayCard(state) + reportCard(state);
 }

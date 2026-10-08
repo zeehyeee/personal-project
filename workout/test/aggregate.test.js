@@ -36,6 +36,12 @@ test('자전거 평균 속도 = 총 거리 ÷ 총 시간', () => {
   assert.equal(day.speed_kmh, 15);
 });
 
+test('가장 긴 한 세션, 쉬지 않고 이어 수영한 구간 수', () => {
+  assert.equal(aggregateSessions(run1002).longest_session_sec, 1131);
+  const swim = aggregateSessions([swim1006Session], groupLapsBySession(swim1006Laps));
+  assert.equal(swim.swim.maxContinuousLaps, 8); // 구간 2~9 (1·10은 휴식)
+});
+
 test('groupByDay는 날짜·종목별로 묶는다', () => {
   const days = groupByDay(
     [...run1002, swim1006Session],

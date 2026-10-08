@@ -315,3 +315,38 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .chg.down { color: var(--red-500); }
 .chg.same { color: var(--grey-500); }
 .month-value { margin: 6px 0 4px; font-size: var(--t2); font-weight: 800; }
+
+/* ── 주간 리포트 ────────────────────────── */
+.week-badge { padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, white); color: var(--primary); font-size: var(--t7); font-weight: 600; }
+.headline { margin: 6px 0 10px !important; text-align: center; font-size: var(--t4) !important; color: var(--text); }
+.ws-day.future { opacity: 0.4; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.stat { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: var(--radius-item); background: var(--surface); }
+.stat-label { font-size: var(--t7); color: var(--grey-600); }
+.stat-value { font-size: var(--t4); font-weight: 800; }
+.stat .chg { font-size: 12px; }
+.ws-sports { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+.ws-sport-head { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--t6); }
+.ws-sport-head b { font-size: var(--t4); }
+.ws-sport .bar { margin: 6px 0 4px; }
+.insight ul { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.insight li { display: flex; gap: 10px; align-items: flex-start; font-size: var(--t6); line-height: 1.45; }
+.insight li.attention { color: var(--grey-700); }
+.habit-score { font-size: var(--t2); color: var(--primary); margin-left: 6px; }
+.habit-svg { width: 100%; height: auto; margin-top: 8px; overflow: visible; }
+.habit-svg polyline { fill: none; stroke: var(--primary); stroke-width: 2; stroke-linejoin: round; }
+.habit-svg circle { fill: var(--surface); stroke: var(--primary); stroke-width: 2; }
+.habit-svg circle.now { fill: var(--primary); }
+.habit-svg .base { stroke: var(--grey-200); stroke-width: 1; }
+.habit-svg text { text-anchor: middle; font-size: 11px; fill: var(--grey-500); }
+.habit-svg text.v { fill: var(--grey-800); font-weight: 600; }
+
+.report-card {
+  width: 100%; display: flex; align-items: center; gap: 12px; text-align: left;
+  padding: 16px; margin-bottom: 12px; border: 0; border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--primary) 12%, white); color: var(--text);
+}
+.report-card b { display: block; font-size: var(--t6); }
+.report-card small { display: block; margin-top: 2px; font-size: var(--t7); color: var(--grey-600); }
+.report-card > span:nth-child(2) { flex: 1; }
+.report-icon { color: var(--primary); }

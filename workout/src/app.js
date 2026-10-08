@@ -167,6 +167,11 @@ root.addEventListener('click', async (e) => {
     render();
     return;
   }
+  if (el('[data-open-week]')) {
+    state.weekStart = el('[data-open-week]').dataset.openWeek;
+    location.replace('#weekly');
+    return;
+  }
   if (el('[data-goto-date]')) {
     state.selected = el('[data-goto-date]').dataset.gotoDate;
     state.viewMonth = monthKey(state.selected);

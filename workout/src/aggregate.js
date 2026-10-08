@@ -39,20 +39,34 @@ export function aggregateSessions(sessions, lapsBySession = {}, settings = DEFAU
     speed_kmh: distTime ? distM / 1000 / (distTime / 3600) : null,
     avg_hr: weightedAvg(sessions, 'avg_hr'),
     avg_cadence: weightedAvg(sessions, 'avg_cadence'),
+    // 한 번에 가장 오래 한 세션 (멈추면 삼성헬스가 세션을 나눈다 → '쉬지 않고 N분')
+    longest_session_sec: Math.max(...sessions.map((s) => Number(s.duration_sec) || 0)),
   };
 
   if (first.sport === 'swim') {
     const pool = Number(settings.pool_length_m) || 25;
     const mult = Number(settings.swim_rest_multiplier) || 2;
     // 휴식 판정은 세션별 중앙값으로 하고, 요약은 그날 구간 전체로 다시 계산한다.
-    const laps = sessions.flatMap((s) => flagRestLaps(lapsBySession[s.id] ?? [], mult));
+    const perSession = sessions.map((s) => flagRestLaps(lapsBySession[s.id] ?? [], mult));
+    const laps = perSession.flat();
     result.swim = {
       laps: sum(sessions, 'swim_laps'),
       total_strokes: sum(sessions, 'swim_total_strokes'),
       lapStats: laps.length ? swimLapStats(laps, pool) : null,
+      // 쉬지 않고 이어서 수영한 최대 구간 수 (세션 안에서만 센다)
+      maxContinuousLaps: Math.max(0, ...perSession.map(continuousLaps)),
     };
   }
   return result;
+}
+
+function continuousLaps(flagged) {
+  let best = 0, run = 0;
+  for (const l of flagged) {
+    run = l.rest ? 0 : run + 1;
+    best = Math.max(best, run);
+  }
+  return best;
 }
 
 // 전체 세션을 날짜 → 종목 → 합산 결과로 묶는다.
