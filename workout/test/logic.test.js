@@ -100,3 +100,10 @@ test('타일용 시간·거리 표기', async () => {
   assert.equal(formatDistance('swim', 1025), '1,025m');
   assert.equal(formatDistance('walk', null), '');
 });
+
+test('주간 라벨: 토요일이 속한 달 기준', async () => {
+  const { weekLabel } = await import('../src/dates.js');
+  assert.deepEqual(weekLabel('2026-09-27'), { month: 10, week: 1, range: '09.27 ~ 10.03' });
+  assert.deepEqual(weekLabel('2026-10-04'), { month: 10, week: 2, range: '10.04 ~ 10.10' });
+  assert.deepEqual(weekLabel('2026-09-20'), { month: 9, week: 4, range: '09.20 ~ 09.26' });
+});

@@ -68,3 +68,11 @@ export function monthGrid(year, month) {
   }
   return weeks;
 }
+
+// 주간 라벨: 토요일이 속한 달 기준 (1일이 포함된 주 = 그 달 1주차, 캘린더 행과 같은 규칙)
+export function weekLabel(startStr) {
+  const sat = addDays(startStr, 6);
+  const [y, m] = sat.split('-').map(Number);
+  const md = (s) => `${s.slice(5, 7)}.${s.slice(8)}`;
+  return { month: m, week: weekOfMonth(sat, y, m), range: `${md(startStr)} ~ ${md(sat)}` };
+}
