@@ -11,6 +11,7 @@ import { renderAddChoice, renderManual, syncManualFields } from './views/add.js'
 import { buildManualSession } from './manual.js';
 import { findDuplicate } from './duplicate.js';
 import { renderCapture } from './views/capture.js';
+import { renderTrend, TARGETS } from './views/trend.js';
 import { extractImage } from './capture/extract.js';
 import { mergeCaptures } from './capture/merge.js';
 import { createBrowserEngine, fileToGray } from './capture/engine-browser.js';
@@ -28,6 +29,7 @@ const state = {
   days: {},
   form: null,
   capture: { phase: 'pick' },
+  trend: { target: 'all', mode: 'day', index: null, scroll: null },
 };
 
 const emptyForm = () => ({ sport: '', date: state.selected <= today ? state.selected : today, start_time: '' });
@@ -51,10 +53,6 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
 }
 
-function renderTrend() {
-  return `<section class="card"><h2>추이</h2><p class="muted">종목 캐러셀과 막대 그래프는 4단계에서 만들어요.</p></section>`;
-}
-
 function render() {
   const r = route();
   const sub = SUB_PAGES.includes(r.name);
@@ -65,7 +63,7 @@ function render() {
   else if (r.name === 'add' && r.args[0] === 'manual') body = renderManual(state);
   else if (r.name === 'add' && r.args[0] === 'capture') body = renderCapture(state);
   else if (r.name === 'add') body = renderAddChoice();
-  else if (r.name === 'trend') body = renderTrend();
+  else if (r.name === 'trend') body = renderTrend(state);
   else if (r.name === 'weekly') body = renderWeekly(state);
   else body = renderCalendar(state);
 
@@ -89,7 +87,31 @@ function render() {
     </div>`;
   const form = root.querySelector('#manual-form');
   if (form) syncManualFields(form);
+  // 추이 그래프: 처음엔 오늘(오른쪽 끝)이 보이게, 다시 그릴 때는 보던 위치 유지
+  const chart = root.querySelector('#tchart');
+  if (chart) {
+    chart.scrollLeft = state.trend.scroll ?? chart.scrollWidth;
+    chart.addEventListener('scroll', () => { state.trend.scroll = chart.scrollLeft; }, { passive: true });
+  }
 }
+
+function setTrendTarget(step) {
+  const i = TARGETS.indexOf(state.trend.target);
+  state.trend = { ...state.trend, target: TARGETS[(i + step + TARGETS.length) % TARGETS.length] };
+  render();
+}
+
+// 종목 캐러셀 스와이프
+let touchX = null;
+root.addEventListener('touchstart', (e) => {
+  touchX = e.target.closest('[data-swipe]') ? e.touches[0].clientX : null;
+}, { passive: true });
+root.addEventListener('touchend', (e) => {
+  if (touchX == null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  touchX = null;
+  if (Math.abs(dx) > 40) setTrendTarget(dx < 0 ? 1 : -1);
+}, { passive: true });
 
 async function reload() {
   state.db = await store.load();
@@ -129,6 +151,26 @@ root.addEventListener('click', async (e) => {
     state.selected = el('[data-date]').dataset.date;
     if (monthKey(state.selected) !== state.viewMonth) state.viewMonth = monthKey(state.selected);
     render();
+    return;
+  }
+  if (el('[data-trend-step]')) {
+    setTrendTarget(Number(el('[data-trend-step]').dataset.trendStep));
+    return;
+  }
+  if (el('[data-trend-mode]')) {
+    state.trend = { ...state.trend, mode: el('[data-trend-mode]').dataset.trendMode, index: null, scroll: null };
+    render();
+    return;
+  }
+  if (el('[data-trend-bar]')) {
+    state.trend.index = Number(el('[data-trend-bar]').dataset.trendBar);
+    render();
+    return;
+  }
+  if (el('[data-goto-date]')) {
+    state.selected = el('[data-goto-date]').dataset.gotoDate;
+    state.viewMonth = monthKey(state.selected);
+    location.replace('#calendar');
     return;
   }
   if (el('[data-detail]')) {
