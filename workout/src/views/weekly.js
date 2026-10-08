@@ -2,7 +2,8 @@
 import { SPORT_META } from '../sports.js';
 import { weeklyReport } from '../report.js';
 import { formatMinutes } from '../format.js';
-import { ICONS, SPORT_ICON, esc } from '../ui.js';
+import { SPORT_ICON, esc } from '../ui.js';
+import { addDays, weekStart, weekLabel } from '../dates.js';
 
 const WD = '일월화수목금토';
 
@@ -27,11 +28,19 @@ export function renderWeekly(state) {
     <div class="ws-day ${d.level}${d.today ? ' today' : ''}${d.future ? ' future' : ''}">
       <span>${WD[new Date(d.date + 'T00:00').getDay()]}</span><i>${Number(d.date.slice(8))}</i>
     </div>`).join('');
+  // 주 고르기: 최근 12주 칩 (화살표 대신)
+  const thisWeek = weekStart(state.today);
+  const weeks = Array.from({ length: 12 }, (_, i) => addDays(thisWeek, (i - 11) * 7));
+  const chips = weeks.map((w) => {
+    const l = weekLabel(w);
+    return `<button class="chip-btn" aria-pressed="${w === state.weekStart}" data-open-week="${w}">${w === thisWeek ? '이번 주' : `${l.month}월 ${l.week}주`}</button>`;
+  }).join('');
+  const top = r.sports[0];
   const stats = r.stats.map((s) => `
     <div class="stat">
       <span class="stat-label">${s.label}</span>
       <span class="stat-value">${s.value}</span>
-      <span class="chg ${s.tone}">${s.diffLabel}</span>
+      ${s.diff == null ? '' : `<span class="chg ${s.tone}">${s.diffLabel}</span>`}
     </div>`).join('');
   const sports = r.sports.length
     ? r.sports.map((s) => `
@@ -45,16 +54,16 @@ export function renderWeekly(state) {
   const vs = r.vs4 === 0 ? '4주 전과 같아요' : `4주 전보다 <span class="chg ${r.vs4 > 0 ? 'up' : 'down'}">${r.vs4 > 0 ? '+' : ''}${r.vs4}점</span>`;
 
   return `
-    <section class="card">
-      <div class="cal-head">
-        <button class="icon-btn" data-week="-1" aria-label="지난주">${ICONS.left}</button>
-        <span class="week-badge">${r.label.month}월 ${r.label.week}주차 · ${r.label.range}</span>
-        <button class="icon-btn" data-week="1" aria-label="다음 주">${ICONS.right}</button>
-      </div>
-      <h2 class="headline">${esc(r.headline)}</h2>
-      <div class="week-strip">${strip}</div>
+    <nav class="chips-row" aria-label="주 선택">${chips}</nav>
+    <section class="page-hero">
+      <span class="hero-label">${r.label.month}월 ${r.label.week}주차 · ${r.label.range}</span>
+      <span class="hero-title">${top ? `<span class="hero-icon">${SPORT_ICON[top.sport]}</span>` : ''}${esc(r.headline)}</span>
     </section>
-    <section class="stats">${stats}</section>
+    <section class="card">
+      <div class="week-strip">${strip}</div>
+      <div class="stats">${stats}</div>
+      ${r.stats.every((s) => s.diff == null) ? '<p class="muted stats-note">직전 4주 기록이 쌓이면 평소와 비교해 드려요.</p>' : ''}
+    </section>
     <section class="card"><h2>종목별 운동량</h2><p class="muted">운동 시간 기준</p><div class="ws-sports">${sports}</div></section>
     <section class="card insight"><h2>이번 주 나의 변화</h2><ul>${insights}</ul></section>
     <section class="card">

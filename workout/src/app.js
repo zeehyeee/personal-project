@@ -11,7 +11,7 @@ import { renderAddChoice, renderManual, syncManualFields } from './views/add.js'
 import { buildManualSession } from './manual.js';
 import { findDuplicate } from './duplicate.js';
 import { renderCapture } from './views/capture.js';
-import { renderTrend, TARGETS } from './views/trend.js';
+import { renderTrend } from './views/trend.js';
 import { extractImage } from './capture/extract.js';
 import { mergeCaptures } from './capture/merge.js';
 import { createBrowserEngine, fileToGray } from './capture/engine-browser.js';
@@ -93,25 +93,10 @@ function render() {
     chart.scrollLeft = state.trend.scroll ?? chart.scrollWidth;
     chart.addEventListener('scroll', () => { state.trend.scroll = chart.scrollLeft; }, { passive: true });
   }
-}
 
-function setTrendTarget(step) {
-  const i = TARGETS.indexOf(state.trend.target);
-  state.trend = { ...state.trend, target: TARGETS[(i + step + TARGETS.length) % TARGETS.length] };
-  render();
+  // 칩 줄: 고른 칩이 보이게
+  root.querySelector('.chips-row [aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
-
-// 종목 캐러셀 스와이프
-let touchX = null;
-root.addEventListener('touchstart', (e) => {
-  touchX = e.target.closest('[data-swipe]') ? e.touches[0].clientX : null;
-}, { passive: true });
-root.addEventListener('touchend', (e) => {
-  if (touchX == null) return;
-  const dx = e.changedTouches[0].clientX - touchX;
-  touchX = null;
-  if (Math.abs(dx) > 40) setTrendTarget(dx < 0 ? 1 : -1);
-}, { passive: true });
 
 async function reload() {
   state.db = await store.load();
@@ -153,8 +138,9 @@ root.addEventListener('click', async (e) => {
     render();
     return;
   }
-  if (el('[data-trend-step]')) {
-    setTrendTarget(Number(el('[data-trend-step]').dataset.trendStep));
+  if (el('[data-trend-target]')) {
+    state.trend = { ...state.trend, target: el('[data-trend-target]').dataset.trendTarget };
+    render();
     return;
   }
   if (el('[data-trend-mode]')) {
@@ -169,7 +155,8 @@ root.addEventListener('click', async (e) => {
   }
   if (el('[data-open-week]')) {
     state.weekStart = el('[data-open-week]').dataset.openWeek;
-    location.replace('#weekly');
+    if (route().name === 'weekly') render();
+    else location.replace('#weekly');
     return;
   }
   if (el('[data-goto-date]')) {
@@ -195,11 +182,6 @@ root.addEventListener('click', async (e) => {
     // 그 날 그 종목 기록을 모두 지웠으면 상세 화면에서 나간다
     const r = route();
     if (r.name === 'detail' && !state.days[r.args[0]]?.[r.args[1]]) goBack();
-    return;
-  }
-  if (el('[data-week]')) {
-    state.weekStart = addDays(state.weekStart, 7 * Number(el('[data-week]').dataset.week));
-    render();
     return;
   }
 

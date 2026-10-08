@@ -28,6 +28,9 @@ test('전체: 모든 종목 운동 시간(분) 합', () => {
   const s = buildSeries(days, 'all', 'day', today);
   const d6 = s.bars.find((b) => b.key === '2026-10-06');
   assert.equal(Math.round(d6.value), Math.round((3983 + 1526 + 706) / 60));
+  // 종목별로 나눈 값의 합 = 전체
+  assert.equal(Math.round(d6.parts.swim + d6.parts.walk + d6.parts.bike), Math.round(d6.value));
+  assert.equal(d6.parts.run, 0);
 });
 
 test('주별: 이번 주와 직전 주 대비', () => {

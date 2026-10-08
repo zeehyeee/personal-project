@@ -39,14 +39,17 @@ export function buildSeries(days, target, mode, today) {
   const { unit, of } = metricOf(target);
   const bars = periods(mode, today).map((p) => {
     let value = 0, activeDays = 0, sessions = 0;
+    // 전체: 종목별로 쌓아 보여주려고 운동 시간(분)을 나눠 둔다
+    const parts = target === 'all' ? Object.fromEntries(SPORTS.map((s) => [s, 0])) : null;
     for (let d = p.start; d <= p.end && d <= today; d = addDays(d, 1)) {
       value += of(days[d]);
+      if (parts) for (const s of SPORTS) parts[s] += days[d]?.[s] ? days[d][s].duration_sec / 60 : 0;
       if (active(days[d], target)) {
         activeDays++;
         sessions += target === 'all' ? SPORTS.reduce((a, s) => a + (days[d]?.[s]?.sessionCount ?? 0), 0) : days[d][target].sessionCount;
       }
     }
-    return { ...p, value, activeDays, sessions, future: p.start > today };
+    return { ...p, value, activeDays, sessions, parts, future: p.start > today };
   });
   const withData = bars.filter((b) => b.activeDays > 0);
   const average = withData.length ? withData.reduce((a, b) => a + b.value, 0) / withData.length : 0;
