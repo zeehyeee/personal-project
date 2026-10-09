@@ -92,6 +92,16 @@ workout/
 - 습관 지수: 최근 6주 꺾은선 + 이번 주 점수 + 4주 전 대비
 - 캘린더 탭 아래: 지난주에 운동했으면 `N월 N주차 리포트가 도착했어요` 카드
 
+## 구글 시트 연동 (7단계)
+
+바다네 곳간 방식(시트에 붙은 Apps Script 웹 앱)을 그대로 쓴다. 설치는 `apps-script/README.md`.
+- `apps-script/Code.gs`: `GET ?action=read&token=` 로 전부 읽기, `POST`(본문 JSON, Content-Type 없음 → CORS 사전 요청 없음)로
+  addSessions / deleteSessions / saveSettings / replaceAll. 비밀번호(TOKEN) 확인, 같은 id 재전송은 건너뜀,
+  날짜·시각 칸은 글자 형식으로 고정. `test/apps-script.test.js` 가 가짜 시트 위에서 이 코드를 실행해 확인한다
+- `src/store-sheets.js`: 휴대폰 사본 + 시트 동기화. 쓰기는 사본에 먼저 하고 '보낼 목록'에 쌓아 보내며,
+  실패하면 다음 열 때 다시 보낸다. 읽기는 시트 기준. 예시 데이터는 보내지 않는다
+- 설정 → 구글 시트 연결: 주소·비밀번호 입력 → 한 번 읽어 확인 → 휴대폰 기록을 시트로 올리고 연결
+
 ## 신기록·설정 (6단계)
 
 - `src/records.js`: 저장된 이력과 비교해 하루(종목별 합산) 단위로 판정. 처음 기록은 신기록이 아니다
@@ -153,5 +163,5 @@ Tesseract.js(무료 OCR)를 CDN에서 처음 한 번 받고(한글+영문 약 3M
 
 ## 남은 확인
 
-- 바다네 곳간의 Sheets 연동 방식 (7단계로 미룸. `src/store.js`만 바꾸면 된다) (읽기 전용 공개 CSV인지, Apps Script 웹앱으로 쓰기까지 하는지)
+- 구글 시트 실제 연결 확인 (이 환경에서는 script.google.com 에 접속할 수 없어 가짜 시트로만 확인)
 - 습관 지수 공식·목표치
