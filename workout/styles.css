@@ -598,3 +598,7 @@ input, select, textarea { font-size: max(16px, 1em); }
 .memo-form { align-items: stretch; }
 .memo-input { height: auto; min-height: 44px; padding: 10px 12px; align-items: center; }
 .memo-input textarea { flex: 1; width: 100%; border: 0; outline: 0; resize: none; background: transparent; font: inherit; font-size: 16px; line-height: 1.45; color: var(--text); field-sizing: content; min-height: 1.45em; display: block; }
+
+/* 막대 그래프 날짜: 막대가 있든 없든 같은 줄에 (막대 아래 28px 칸에 고정) */
+.tbar { position: relative; padding-bottom: 28px; gap: 0; }
+.tbar-label { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); }
