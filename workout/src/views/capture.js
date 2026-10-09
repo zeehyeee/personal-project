@@ -80,7 +80,7 @@ function card(s, i) {
       <p class="muted">${facts}</p>
       ${warn ? `<ul class="notes small">${warn}</ul>` : ''}
       ${lapEditor(s, i)}
-      <details ${s.needsDate ? 'open' : ''}>
+      <details ${s.needsDate || s.needsEdit ? 'open' : ''}>
         <summary>날짜·시간·거리 수정</summary>
         <div class="form cap-edit">
           <div class="row2">

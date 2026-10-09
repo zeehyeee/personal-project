@@ -140,7 +140,10 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
     } else if (g.sport === 'swim' && !laps.length) {
       warnings.push('수영 구간 화면이 없어 페이스·SWOLF·영법별 기록은 비어 있어요.');
     }
-    return { session, laps: sessionLaps, warnings, needsDate: !dateInfo || dateInfo.needsConfirm };
+    // 칼로리가 운동 시간에 비해 말이 안 되게 크면(예: 92 kcal 옆 숫자가 붙어 92163) 확인 요청
+    const kcalOdd = session.kcal != null && session.duration_sec > 0 && session.kcal / (session.duration_sec / 60) > 25;
+    if (kcalOdd) warnings.push(`칼로리 ${session.kcal}kcal는 운동 시간에 비해 너무 커요. 아래에서 확인해주세요.`);
+    return { session, laps: sessionLaps, warnings, needsDate: !dateInfo || dateInfo.needsConfirm, needsEdit: kcalOdd };
   });
 
   sessions.sort((a, b) => (a.session.date + a.session.start_time).localeCompare(b.session.date + b.session.start_time));

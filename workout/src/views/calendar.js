@@ -72,7 +72,7 @@ function selectedDayCard(state, coach) {
   }).join('');
   return `
     <section class="card">
-      <div class="day-head"><h2>${title}</h2><span class="muted">${sports.length}종목</span></div>
+      <div class="day-head"><h2>${title}</h2>${sports.length > 1 ? `<span class="muted">${sports.length}종목 · 총 ${formatMinutes(sports.reduce((a, s) => a + day[s].duration_sec, 0))}</span>` : ''}</div>
       <div class="rows">${tiles}</div>
     </section>`;
 }

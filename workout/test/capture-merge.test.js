@@ -128,3 +128,11 @@ test('아이폰 헤더: 초 없는 운동 시간(±60초)·시작~끝 시각으�
   assert.equal(by[1025].session.start_time, '10:40');
   assert.ok(r.sessions.every((s) => !s.needsDate));
 });
+
+test('칼로리가 운동 시간에 비해 너무 크면(92163kcal/25분) 확인을 요청하고 수정 칸을 연다', () => {
+  const r = mergeCaptures([{ kind: 'detail', sport: 'walk', duration_sec: 1526, distance_m: 1930, kcal: 92163 }], { today: '2026-10-09', newId: () => 'x' });
+  assert.equal(r.sessions[0].needsEdit, true);
+  assert.match(r.sessions[0].warnings.join(), /92163kcal는 운동 시간에 비해 너무 커요/);
+  const ok = mergeCaptures([{ kind: 'detail', sport: 'swim', duration_sec: 5146, distance_m: 775, kcal: 1041 }], { today: '2026-10-09', newId: () => 'x' });
+  assert.equal(ok.sessions[0].needsEdit, false);
+});
