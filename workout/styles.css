@@ -561,3 +561,8 @@ input, select, textarea { font-size: max(16px, 1em); }
     background: var(--bg);
   }
 }
+
+/* 지난주 이맘때 비교 카드 */
+.report-card.pace { background: var(--surface); }
+.report-card.pace b.up { color: var(--green-600); }
+.pace-tip { display: block; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-style: normal; font-size: var(--t7); color: var(--grey-800); line-height: 1.45; }

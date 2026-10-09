@@ -26,6 +26,7 @@ const makeStore = () => {
 let store = makeStore();
 const root = document.getElementById('app');
 
+const REPORT_SEEN_KEY = 'workout-log:report-seen';
 const today = toDateStr(new Date());
 const state = {
   today,
@@ -37,6 +38,8 @@ const state = {
   form: null,
   capture: { phase: 'pick' },
   trend: { target: 'all', mode: 'day', index: null, scroll: null },
+  // 마지막으로 열어 본 주간 리포트(그 주의 시작일). 열면 '리포트 도착' 카드가 비교 카드로 바뀐다
+  reportSeen: (() => { try { return localStorage.getItem(REPORT_SEEN_KEY); } catch { return null; } })(),
 };
 
 const emptyForm = () => ({ sport: '', date: state.selected <= today ? state.selected : today, start_time: '' });
@@ -214,6 +217,11 @@ root.addEventListener('click', async (e) => {
     return;
   }
   if (el('[data-open-week]')) {
+    const seen = el('[data-open-week]').dataset.reportSeen;
+    if (seen) {
+      state.reportSeen = seen;
+      try { localStorage.setItem(REPORT_SEEN_KEY, seen); } catch { /* 저장 못 해도 이번엔 넘어간다 */ }
+    }
     state.weekStart = el('[data-open-week]').dataset.openWeek;
     if (route().name === 'weekly') render();
     else location.replace('#weekly');

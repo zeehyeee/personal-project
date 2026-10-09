@@ -1,7 +1,7 @@
 // 캘린더 탭: 이번 달·연속 한 줄 → 월 캘린더 → 선택한 날 목록 (오늘 기록이 없으면 할 일 한 줄 + 고양이)
 import { SPORTS, SPORT_META } from '../sports.js';
-import { monthGrid, monthKey, weekStart, addDays, weekLabel } from '../dates.js';
-import { weeklyReport } from '../report.js';
+import { monthGrid, monthKey } from '../dates.js';
+import { homeCard } from '../home.js';
 import { recordsOn } from '../records.js';
 import { todayCoach } from '../coach.js';
 import { formatMinutes, formatDistance } from '../format.js';
@@ -77,16 +77,21 @@ function selectedDayCard(state, coach) {
     </section>`;
 }
 
-// 지난주에 운동했으면 '리포트 도착' 카드 → 주간 탭
-function reportCard(state) {
-  const start = addDays(weekStart(state.today), -7);
-  const r = weeklyReport(state.days, start, state.today, state.db.settings);
-  if (!r.sports.length) return '';
-  const { month, week } = weekLabel(start);
-  return `
-    <button class="report-card" data-open-week="${start}">
+// 새 주엔 지난주 리포트 도착(열면 사라짐), 그 뒤엔 지난주 이맘때 비교 + 기록에서 찾은 제안 한 줄
+function homeCardHtml(state) {
+  const c = homeCard(state.days, state.today, { seenWeek: state.reportSeen, settings: state.db.settings });
+  if (c.kind === 'report') {
+    return `
+    <button class="report-card" data-open-week="${c.week}" data-report-seen="${c.week}">
       <span class="report-icon">${ICONS.week}</span>
-      <span><b>${month}월 ${week}주차 리포트가 도착했어요</b><small>${r.headline} · 습관 지수 ${r.score}점</small></span>
+      <span><b>${c.title}</b><small>${c.sub}</small></span>
+      <span>${ICONS.right}</span>
+    </button>`;
+  }
+  return `
+    <button class="report-card pace" data-open-week="${c.week}">
+      <span class="report-icon">${ICONS.week}</span>
+      <span><b class="${c.tone}">${c.title}</b><small>${c.sub}</small>${c.tip ? `<em class="pace-tip">${c.tip}</em>` : ''}</span>
       <span>${ICONS.right}</span>
     </button>`;
 }
@@ -99,5 +104,5 @@ function cond(day, state) {
 
 export function renderCalendar(state) {
   const coach = todayCoach(state.days, state.today);
-  return streakBar(coach) + calendarCard(state) + selectedDayCard(state, coach) + reportCard(state);
+  return streakBar(coach) + calendarCard(state) + selectedDayCard(state, coach) + homeCardHtml(state);
 }

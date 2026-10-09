@@ -1,6 +1,7 @@
 // 성장 그래프: 종목별 '얼마나 늘었나'를 기록마다 점으로 (거리·시간 말고 실력 지표)
 import { formatPace, formatMinutes } from './format.js';
 import { RECORD_METRICS } from './records.js';
+import { swimRate } from './home.js';
 
 // 초 차이: 60초 이상이면 '1분 9초'
 const secs = (v) => { const r = Math.round(v); return r >= 60 ? `${Math.floor(r / 60)}분${r % 60 ? ` ${r % 60}초` : ''}` : `${r}초`; };
@@ -8,6 +9,7 @@ const md = (d) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8))}일`;
 // lower: 낮을수록 좋은 지표 (그래프는 좋아지는 쪽이 위로)
 export const GROWTH_METRICS = {
   swim: [
+    { key: 'swimRate', label: '분당 거리', lower: false, get: swimRate, text: (v) => `${v.toFixed(1)}m/분`, diff: (v) => `${v.toFixed(1)}m` },
     { key: 'swimPace', label: '100m 페이스', lower: true, get: RECORD_METRICS.swimPace.get, text: (v) => `${formatPace(v)}/100m`, diff: (v) => secs(v) },
     { key: 'swolf', label: 'SWOLF', lower: true, get: RECORD_METRICS.swolf.get, text: (v) => v.toFixed(1), diff: (v) => v.toFixed(1) },
     { key: 'distance', label: '거리', lower: false, get: (d) => d.distance_m || null, text: (v) => `${Math.round(v)}m`, diff: (v) => `${Math.round(v)}m` },
@@ -27,7 +29,7 @@ export const GROWTH_METRICS = {
   ],
 };
 
-const WORD = { swimPace: ['빨라졌어요', '느려졌어요'], pace: ['빨라졌어요', '느려졌어요'], speed: ['빨라졌어요', '느려졌어요'], swolf: ['좋아졌어요', '늘었어요'] };
+const WORD = { swimPace: ['빨라졌어요', '느려졌어요'], pace: ['빨라졌어요', '느려졌어요'], speed: ['빨라졌어요', '느려졌어요'], swimRate: ['늘었어요', '줄었어요'], swolf: ['좋아졌어요', '늘었어요'] };
 
 // 최근 limit개 기록. summary: 첫 점 대비 마지막 점이 좋아졌는지 한 줄로
 export function growthSeries(days, sport, key, limit = 20) {
