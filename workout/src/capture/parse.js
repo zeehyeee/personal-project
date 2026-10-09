@@ -72,10 +72,16 @@ export function parseDaily(text) {
 // 결과 헤더: `10월 2일 (금) 오후 7:28 - 오후 7:50` 와 큰 글씨 `18분 51초`
 export function parseHeader(text) {
   // OCR이 콜론을 빠뜨리는 경우(`오후 728`)도 받는다
-  const m = text.match(new RegExp(`(오전|오후)\\s*${CLOCK}\\s*[-~]\\s*(오전|오후)\\s*${CLOCK}`));
+  // 앞의 `오후` 가 `2%` `=` 처럼 깨지는 경우가 있어 앞쪽은 아무 글자 3개까지 받고, 뒤쪽 오전/오후로 추정한다
+  const m = text.match(new RegExp(`(오전|오후|[^\\s\\d]{1,3}|\\d%)?\\s*${CLOCK}\\s*[-~]\\s*(오전|오후)\\s*${CLOCK}`));
   if (!m) return null;
-  const start = ampmTime(m[1], m[2]);
   const end = ampmTime(m[3], m[4]);
+  let start = /^(오전|오후)$/.test(m[1] ?? '') ? ampmTime(m[1], m[2]) : null;
+  if (!start && end) {
+    // 끝과 같은 오전/오후로 보고, 그러면 시작이 끝보다 늦어지면 반대로 (오전 11:50 - 오후 12:30)
+    start = ampmTime(m[3], m[2]);
+    if (start && start > end) start = ampmTime(m[3] === '오후' ? '오전' : '오후', m[2]);
+  }
   if (!start) return null;
   // `18분 51초`, 아이폰 `1 시간 25 분` (초 없음). 초는 같은 줄의 숫자만 (다음 줄 `775 m` 를 초로 읽지 않게)
   // 큰 글씨 `1` 이 `]` `|` `l` `I` 로 깨지는 경우도 받는다

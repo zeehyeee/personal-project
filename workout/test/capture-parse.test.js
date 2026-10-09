@@ -91,3 +91,13 @@ test('시각: 콜론이 빠지거나(728) 7로 읽혀도(7728) 7:28, 10:57·12:2
   const d = parseDaily('10월 2일 (금)\n3세션 3.49 km\n달리기    오후 7728\n00:18:51 2.03 km   Galaxy Fit2\n달리기 @   오후 7:18\n00:07:59 1.05 km');
   assert.deepEqual(d.rows.map((r) => r.start_time), ['19:28', '19:18']);
 });
+
+test('헤더: 앞의 `오후` 가 깨져도(`2%`, `=`) 뒤쪽 오전/오후로 시작 시각을 추정', () => {
+  const a = parseHeader('9월 28일 (월) = 7:38 - 오후 8:07\n26 분 25초');
+  assert.equal(a.start_time, '19:38');
+  assert.equal(a.end_time, '20:07');
+  assert.equal(a.duration_sec, 1585);
+  assert.deepEqual(a.date, { month: 9, day: 28, weekday: '월' });
+  assert.equal(parseHeader('10월 4일 (일) 2% 11:50 - 오후 12:30\n40분').start_time, '11:50');
+  assert.equal(parseHeader('10월 4일 (일) 오전 10:57 - 오후 12:23').start_time, '10:57');
+});
