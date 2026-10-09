@@ -5,7 +5,7 @@ import { homeCard } from '../home.js';
 import { recordsOn } from '../records.js';
 import { todayCoach } from '../coach.js';
 import { formatMinutes, formatDistance } from '../format.js';
-import { ICONS, SPORT_ICON, CONDITION_EMOJI, FIN_ICON, dateLabel, emptyState } from '../ui.js';
+import { ICONS, SPORT_ICON, FIN_ICON, dateLabel, emptyState } from '../ui.js';
 
 // 예시 데이터 안내와 같은 흰 띠 한 줄: 왼쪽 이번 달 운동일, 오른쪽 연속 일차 (오늘 아직이면 응원)
 function streakBar(c) {
@@ -61,7 +61,7 @@ function selectedDayCard(state, coach) {
   }
   // 토스 목록 줄: 종목 아이콘 · 이름(+거리·컨디션·신기록) · 운동 시간 ›
   const tiles = sports.map((s) => {
-    const meta = [formatDistance(s, day[s].distance_m), day[s].fins ? `<span class="row-fin">${FIN_ICON}</span>` : '', cond(day[s], state), recordsOn(state.days, s, date).length ? '<span class="row-pr">🏅 신기록</span>' : ''].filter(Boolean).join(' · ');
+    const meta = [formatDistance(s, day[s].distance_m), day[s].fins ? `<span class="row-fin">${FIN_ICON}</span>` : '', recordsOn(state.days, s, date).length ? '<span class="row-pr">🏅 신기록</span>' : ''].filter(Boolean).join(' · ');
     return `
     <button class="row" data-detail="${date}/${s}" style="--c: var(--${s})">
       <span class="row-icon">${SPORT_ICON[s]}</span>
@@ -88,18 +88,13 @@ function homeCardHtml(state) {
       <span>${ICONS.right}</span>
     </button>`;
   }
+  // 리포트 도착 카드와 같은 모양: 굵은 한 줄 + 작은 한 줄 (제안이 있으면 제안, 없으면 운동일)
   return `
-    <button class="report-card pace" data-open-week="${c.week}">
+    <button class="report-card" data-open-week="${c.week}">
       <span class="report-icon">${ICONS.week}</span>
-      <span><b class="${c.tone}">${c.title}</b><small>${c.sub}</small>${c.tip ? `<em class="pace-tip">${c.tip}</em>` : ''}</span>
+      <span><b>${c.title}</b><small>${c.tip ?? c.sub}</small></span>
       <span>${ICONS.right}</span>
     </button>`;
-}
-
-// 그날 그 종목에 남긴 컨디션 (첫 세션 기준)
-function cond(day, state) {
-  const first = state.db.sessions.filter((x) => day.sessionIds.includes(x.id)).find((x) => x.condition);
-  return first ? CONDITION_EMOJI[first.condition] ?? '' : '';
 }
 
 export function renderCalendar(state) {

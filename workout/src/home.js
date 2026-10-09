@@ -1,6 +1,5 @@
 // 캘린더 아래 카드 하나: 새 주가 시작되면 '지난주 리포트 도착'(열어보면 사라짐),
 // 그 뒤에는 '지난주 이맘때와 비교' + 기록에서 찾은 제안 한 줄 (규칙 기반)
-import { SPORTS } from './sports.js';
 import { addDays, weekStart, weekLabel, parseDate } from './dates.js';
 import { rangeStats, weeklyReport } from './report.js';
 import { formatMinutes } from './format.js';
@@ -35,7 +34,7 @@ export function homeCard(days, today, { seenWeek = null, settings } = {}) {
   };
 }
 
-// 기록에서 찾은 제안 한 줄. 좋은 변화 → 고칠 점 → 리듬 순
+// 기록에서 찾은 분석 한 줄. 좋은 변화 → 고칠 점 순 (없으면 null → 카드는 운동일 비교를 보여준다)
 export function suggestion(days, today) {
   const dates = Object.keys(days).filter((d) => d <= today).sort();
   const swims = dates.filter((d) => swimRate(days[d].swim) != null);
@@ -45,7 +44,7 @@ export function suggestion(days, today) {
     const avg = before.reduce((a, b) => a + b, 0) / before.length;
     const now = swimRate(days[latest].swim);
     if (gapDays(latest, today) <= 7 && now >= avg * 1.1) {
-      return `수영 분당 ${now.toFixed(1)}m로 평소(${avg.toFixed(1)}m)보다 쉬는 시간이 줄었어요.`;
+      return `수영 분당 ${now.toFixed(1)}m · 평소(${avg.toFixed(1)}m)보다 덜 쉬었어요`;
     }
   }
   // 최근 2주 달리기 강도: 강도 기록이 있는 달리기의 고강도 이상 비율
@@ -58,11 +57,8 @@ export function suggestion(days, today) {
     total += r.zone_duration_sec / 60;
   }
   if (runs >= 2 && total > 0 && hard / total >= 0.6) {
-    return `최근 달리기의 ${Math.round((hard / total) * 100)}%가 고강도예요. 다음엔 대화할 수 있는 속도로 오래 뛰어보세요.`;
+    return `달리기 ${Math.round((hard / total) * 100)}%가 고강도 · 다음엔 천천히 오래 뛰어봐요`;
   }
-  const lastSwim = [...dates].reverse().find((d) => days[d].swim);
-  if (lastSwim && gapDays(lastSwim, today) >= 4) return `수영한 지 ${gapDays(lastSwim, today)}일 됐어요. 이번 주 한 번 어때요?`;
-  const lastAny = [...dates].reverse().find((d) => SPORTS.some((s) => days[d][s]));
-  if (lastAny && gapDays(lastAny, today) >= 2) return `${gapDays(lastAny, today) - 1}일 쉬었어요. 가볍게 걷기부터 시작해볼까요?`;
+  // 쉰 날·오래 쉰 수영은 '오늘' 칸에서 이미 말하므로 여기선 분석만
   return null;
 }

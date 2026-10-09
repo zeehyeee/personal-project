@@ -25,7 +25,7 @@ test('제안: 수영 분당 거리가 평소보다 10% 넘게 늘면 칭찬 (실
     s('2026-10-03', 'swim', 69.8, { distance_m: 1025 }),
   ]);
   assert.equal(swimRate(days['2026-10-03'].swim).toFixed(1), '14.7');
-  assert.match(suggestion(days, '2026-10-04'), /수영 분당 14\.7m로 평소\(9\.9m\)보다/);
+  assert.match(suggestion(days, '2026-10-04'), /수영 분당 14\.7m · 평소\(9\.9m\)보다/);
 });
 
 test('제안: 최근 2주 달리기가 60% 넘게 고강도면 천천히 오래 (실제 기록 9/28·10/1)', () => {
@@ -33,10 +33,10 @@ test('제안: 최근 2주 달리기가 60% 넘게 고강도면 천천히 오래 
     s('2026-09-28', 'run', 26.4, { zone_max_min: 11, zone_high_min: 15, zone_mid_min: 2 }),
     s('2026-10-01', 'run', 25.7, { zone_max_min: 5, zone_high_min: 14, zone_mid_min: 1 }),
   ]);
-  assert.match(suggestion(days, '2026-10-02'), /최근 달리기의 \d+%가 고강도예요/);
+  assert.match(suggestion(days, '2026-10-02'), /달리기 \d+%가 고강도/);
 });
 
-test('제안: 수영 4일 이상 쉬면 권유, 기록이 없으면 null', () => {
-  assert.match(suggestion(groupByDay([s('2026-10-01', 'swim', 40, { distance_m: 500 })]), '2026-10-06'), /수영한 지 5일/);
+test('제안: 쉰 날은 오늘 칸에서 말하므로 여기선 없음, 기록이 없어도 null', () => {
+  assert.equal(suggestion(groupByDay([s('2026-10-01', 'swim', 40, { distance_m: 500 })]), '2026-10-06'), null);
   assert.equal(suggestion({}, '2026-10-06'), null);
 });
