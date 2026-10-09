@@ -480,7 +480,7 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .memo-form { display: flex; gap: 8px; margin-top: 10px; }
 .memo-form .field-input { flex: 1; height: 44px; }
 .memo-form input { font-size: var(--t6); }
-.memo-save { flex: none; height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--grey-800); color: #fff; font-weight: 600; font-size: var(--t7); }
+.memo-save { flex: none; min-height: 44px; align-self: stretch; padding: 0 16px; border: 0; border-radius: 12px; background: var(--grey-800); color: #fff; font-weight: 600; font-size: var(--t7); }
 .sessions li > span:last-child { display: flex; }
 .sessions button.edit { color: var(--grey-700); }
 
@@ -598,6 +598,6 @@ input, select, textarea { font-size: max(16px, 1em); }
 .memo-view { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--grey-50); }
 .memo-view p { margin: 0; font-size: var(--t6); line-height: 1.5; color: var(--grey-800); white-space: pre-wrap; word-break: break-word; }
 .memo-view .text-link { margin: 6px 0 0; padding: 0; }
-.memo-form { align-items: flex-end; }
-.memo-input { height: auto; padding: 10px 12px; }
-.memo-input textarea { flex: 1; width: 100%; border: 0; outline: 0; resize: none; background: transparent; font: inherit; font-size: 16px; line-height: 1.45; color: var(--text); field-sizing: content; min-height: 2.9em; }
+.memo-form { align-items: stretch; }
+.memo-input { height: auto; min-height: 44px; padding: 10px 12px; align-items: center; }
+.memo-input textarea { flex: 1; width: 100%; border: 0; outline: 0; resize: none; background: transparent; font: inherit; font-size: 16px; line-height: 1.45; color: var(--text); field-sizing: content; min-height: 1.45em; display: block; }

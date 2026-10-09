@@ -139,3 +139,18 @@ test('구간 나중에 채우기·고치기: 그 세션 구간만 통째로 바�
   assert.deepEqual(db.laps.filter((l) => l.session_id === 'sw').map((l) => [l.lap_no, l.stroke, l.time_sec]), [[1, 'backstroke', 61], [2, 'freestyle', 55]]);
   assert.equal(db.laps.filter((l) => l.session_id === 'other').length, 1);
 });
+
+test('시트로 못 보낸 변경이 있으면 시트 내용으로 덮지 않는다 (고친 게 되돌아가지 않게)', async () => {
+  const api = fakeAppsScript();
+  const storage = memoryStorage();
+  const store = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, api.fetchImpl), storage);
+  await store.load();
+  await store.addSessions([run]);
+  // 시트가 이 변경을 거절하는 상황 (예: 예전 Code.gs 라 모르는 동작)
+  const reject = async (url, opts) => (opts?.method === 'POST' ? { json: async () => ({ ok: false, error: 'unknown action' }) } : api.fetchImpl(url, opts));
+  const store2 = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, reject), storage);
+  await store2.updateSession({ ...run, condition: 'great' });
+  const db = await store2.load();
+  assert.equal(db.sessions.find((x) => x.id === run.id).condition, 'great');
+  assert.equal(store2.status.pending, 1);
+});

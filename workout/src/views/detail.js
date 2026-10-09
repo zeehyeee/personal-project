@@ -203,7 +203,7 @@ function lapEditCard(s, laps, many) {
 function lapView(state, groups) {
   const metric = state.lapMetric ?? 'time';
   const val = (l) => (metric === 'time' ? l.time_sec : metric === 'strokes' ? l.strokes : l.time_sec != null && l.strokes != null ? l.time_sec + l.strokes : null);
-  const fmt = (v) => (v == null ? '-' : metric === 'time' ? mmss(v) : String(v));
+  const fmt = (v) => (v == null ? '-' : metric === 'time' ? mmss(Math.round(v)) : String(v));
   const all = groups.flatMap((g) => g.laps);
   // 막대 길이·평균·최고는 휴식이 섞인 구간을 빼고 (스트로크는 휴식과 무관하니 전부)
   const fair = all.filter((l) => val(l) != null && (metric === 'strokes' || !l.rest));
@@ -228,7 +228,7 @@ function lapView(state, groups) {
         <h2>구간 기록</h2>
         <div class="pills" role="tablist">${LAP_METRICS.map(([k, l]) => `<button role="tab" aria-selected="${k === metric}" data-lap-metric="${k}">${l}</button>`).join('')}</div>
       </div>
-      <p class="muted">${all.length}구간 · ${avg != null ? `평균 ${fmt(Math.round(avg * 10) / 10 === Math.round(avg) ? Math.round(avg) : Math.round(avg * 10) / 10)}${metric === 'strokes' ? '' : ' (휴식 제외)'}` : ''}</p>
+      <p class="muted">${all.length}구간 · ${avg != null ? `평균 ${metric === 'time' ? fmt(avg) : Number.isInteger(Math.round(avg * 10) / 10) ? Math.round(avg) : (Math.round(avg * 10) / 10).toFixed(1)}${metric === 'strokes' ? '' : ' (휴식 제외)'}` : ''}</p>
       <ul class="laps">${rows}</ul>
     </section>`;
 }
@@ -253,7 +253,7 @@ function noteSection(state, day) {
         <button type="button" class="text-link" data-memo-edit="${esc(s.id)}">메모 수정</button>
       </div>` : `
       <form class="memo-form" id="memo-form" data-session="${esc(s.id)}">
-        <span class="field-input memo-input"><textarea name="memo" maxlength="200" rows="2" placeholder="메모 (예: 킥판 연습)">${esc(s.memo ?? '')}</textarea></span>
+        <span class="field-input memo-input"><textarea name="memo" maxlength="200" rows="1" placeholder="메모 (예: 킥판 연습)">${esc(s.memo ?? '')}</textarea></span>
         <button class="memo-save" type="submit">저장</button>
       </form>`}
     </section>`;

@@ -95,7 +95,11 @@ export function createSyncedStore(local, client, storage = globalThis.localStora
   return {
     status,
     async load() {
-      await flush();
+      // 아직 시트로 못 보낸 변경이 있으면 시트 내용으로 덮지 않는다 (덮으면 방금 고친 것이 되돌아간다)
+      if (!(await flush())) {
+        status.pending = queue().length;
+        return local.load();
+      }
       try {
         const data = await client.read();
         await local.importAll({
