@@ -50,3 +50,10 @@ export const CONDITIONS = [
   ['great', '🤩', '최고'],
 ];
 export const CONDITION_EMOJI = Object.fromEntries(CONDITIONS.map(([k, e]) => [k, e]));
+
+// 오리발(수영 핀) 아이콘: 발 넣는 곳 + 넓은 날개
+export const FIN_ICON = `<svg class="fin" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 1.8c-2.6 0-4.3 1.9-4.3 4.4v3.3L4.6 18.6c-.5 1.6.7 3.2 2.4 3.2 1 0 1.8-.5 2.4-1.2L12 18l2.6 2.6c.6.7 1.4 1.2 2.4 1.2 1.7 0 2.9-1.6 2.4-3.2l-3.1-9.1V6.2c0-2.5-1.7-4.4-4.3-4.4z" fill="currentColor"/>
+  <ellipse cx="12" cy="6.4" rx="2.3" ry="2.6" fill="#fff" opacity=".9"/>
+  <path d="M9.6 13.5 8 19M14.4 13.5 16 19M12 12v6" stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".55"/>
+</svg>`;

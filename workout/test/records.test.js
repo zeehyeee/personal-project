@@ -35,3 +35,15 @@ test('역대 최고 기록', () => {
   assert.equal(b.find((x) => x.key === 'distance').date, '2026-10-02');
   assert.equal(b.find((x) => x.key === 'pace').date, '2026-09-20');
 });
+
+test('오리발 낀 날은 페이스·SWOLF 신기록·비교에서 빠진다 (거리·시간은 그대로)', async () => {
+  const { groupByDay, groupLapsBySession } = await import('../src/aggregate.js');
+  const { demoData } = await import('../src/demo.js');
+  const { sessions, laps } = demoData();
+  const swim = sessions.find((x) => x.sport === 'swim');
+  const later = { ...swim, id: 'f', date: '2026-10-08', distance_m: 500, gear: 'fins' };
+  const fast = laps.filter((l) => l.session_id === swim.id).map((l) => ({ ...l, session_id: 'f', time_sec: l.time_sec - 10, strokes: 3 }));
+  const d = groupByDay([...sessions, later], groupLapsBySession([...laps, ...fast]));
+  assert.equal(d['2026-10-08'].swim.fins, true);
+  assert.deepEqual(recordsOn(d, 'swim', '2026-10-08').map((r) => r.key), ['distance']);
+});

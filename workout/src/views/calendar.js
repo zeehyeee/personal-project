@@ -5,7 +5,7 @@ import { homeCard } from '../home.js';
 import { recordsOn } from '../records.js';
 import { todayCoach } from '../coach.js';
 import { formatMinutes, formatDistance } from '../format.js';
-import { ICONS, SPORT_ICON, CONDITION_EMOJI, dateLabel, emptyState } from '../ui.js';
+import { ICONS, SPORT_ICON, CONDITION_EMOJI, FIN_ICON, dateLabel, emptyState } from '../ui.js';
 
 // 예시 데이터 안내와 같은 흰 띠 한 줄: 왼쪽 이번 달 운동일, 오른쪽 연속 일차 (오늘 아직이면 응원)
 function streakBar(c) {
@@ -61,7 +61,7 @@ function selectedDayCard(state, coach) {
   }
   // 토스 목록 줄: 종목 아이콘 · 이름(+거리·컨디션·신기록) · 운동 시간 ›
   const tiles = sports.map((s) => {
-    const meta = [formatDistance(s, day[s].distance_m), cond(day[s], state), recordsOn(state.days, s, date).length ? '<span class="row-pr">🏅 신기록</span>' : ''].filter(Boolean).join(' · ');
+    const meta = [formatDistance(s, day[s].distance_m), day[s].fins ? `<span class="row-fin">${FIN_ICON}</span>` : '', cond(day[s], state), recordsOn(state.days, s, date).length ? '<span class="row-pr">🏅 신기록</span>' : ''].filter(Boolean).join(' · ');
     return `
     <button class="row" data-detail="${date}/${s}" style="--c: var(--${s})">
       <span class="row-icon">${SPORT_ICON[s]}</span>

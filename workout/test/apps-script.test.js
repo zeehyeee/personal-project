@@ -122,7 +122,8 @@ test('updateSession: 같은 id 행을 덮어쓰고 메모·컨디션을 저장, 
   assert.equal(rows.length, 1);
   assert.equal(rows[0].duration_sec, 4000);
   assert.equal(rows[0].memo, '킥판 연습');
-  assert.equal(ss.sheets.sessions.grid[0].at(-1), 'memo');
+  assert.ok(ss.sheets.sessions.grid[0].includes('memo'));
+  assert.equal(ss.sheets.sessions.grid[0].at(-1), 'gear');
   // 없는 id 면 새로 추가
   post({ action: 'updateSession', session: { ...s1, id: 'z' } });
   assert.equal(read().data.sessions.length, 2);

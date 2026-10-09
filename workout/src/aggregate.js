@@ -2,6 +2,8 @@
 import { flagRestLaps, swimLapStats } from './swim.js';
 import { DEFAULT_SETTINGS, ZONE_KEYS } from './sports.js';
 
+export const hasGear = (s, g) => String(s.gear ?? '').split(',').includes(g);
+
 const has = (v) => v !== null && v !== undefined && v !== '';
 const sum = (rows, key) => rows.reduce((a, r) => a + (has(r[key]) ? Number(r[key]) : 0), 0);
 
@@ -32,6 +34,8 @@ export function aggregateSessions(sessions, lapsBySession = {}, settings = DEFAU
     sport: first.sport,
     sessionCount: sessions.length,
     sessionIds: sessions.map((s) => s.id),
+    // 오리발을 낀 세션이 하나라도 있으면 그날 수영은 페이스·SWOLF 비교에서 뺀다
+    fins: sessions.some((s) => hasGear(s, 'fins')),
     duration_sec: duration,
     distance_m: sum(sessions, 'distance_m'),
     kcal: sum(sessions, 'kcal'),

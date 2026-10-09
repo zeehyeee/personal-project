@@ -14,12 +14,12 @@ const TOKEN = ''; // 비워 두면 비밀번호 없이 (바다네 곳간과 같�
 const SHEETS = {
   sessions: ['id', 'date', 'start_time', 'sport', 'duration_sec', 'distance_m', 'kcal', 'avg_hr', 'avg_cadence',
     'swim_laps', 'swim_total_strokes', 'pool_length_m', 'zone_max_min', 'zone_high_min', 'zone_mid_min', 'zone_low_min',
-    'source', 'saved_at', 'condition', 'memo'],
+    'source', 'saved_at', 'condition', 'memo', 'gear'],
   swim_laps: ['session_id', 'lap_no', 'stroke', 'time_sec', 'strokes'],
   settings: ['key', 'value'],
 };
 // 날짜·시각이 시트에서 날짜 형식으로 바뀌지 않게 글자로 둔다
-const TEXT_COLUMNS = { sessions: ['id', 'date', 'start_time', 'sport', 'source', 'saved_at', 'condition', 'memo'], swim_laps: ['session_id', 'stroke'], settings: ['key'] };
+const TEXT_COLUMNS = { sessions: ['id', 'date', 'start_time', 'sport', 'source', 'saved_at', 'condition', 'memo', 'gear'], swim_laps: ['session_id', 'stroke'], settings: ['key'] };
 
 // 편집기에서 ▶실행으로 눌러도 오류 없이 시트 탭을 만들고 결과를 보여준다 (그때는 e 가 없다)
 function doGet(e) {

@@ -2,7 +2,8 @@
 // 하루(종목별 합산) 단위로 비교하고, 처음 기록은 신기록으로 치지 않는다.
 import { formatDuration, formatPace } from './format.js';
 
-const swimOk = (d) => d.swim?.lapStats && d.swim.lapStats.lapCount - d.swim.lapStats.restExcluded >= 4;
+// 오리발 낀 날은 페이스·SWOLF 가 좋게 나와 비교에서 뺀다
+const swimOk = (d) => !d.fins && d.swim?.lapStats && d.swim.lapStats.lapCount - d.swim.lapStats.restExcluded >= 4;
 
 // higher: 클수록 좋은 기록인지
 export const RECORD_METRICS = {

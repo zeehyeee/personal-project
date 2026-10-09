@@ -7,7 +7,7 @@ import { formatMinutes } from './format.js';
 
 const gapDays = (a, b) => Math.round((parseDate(b) - parseDate(a)) / 86400000);
 // 수영장에 있던 1분당 수영한 거리: 쉬는 시간이 줄수록 커진다 (삼성헬스 값 그대로라 추정 없음)
-export const swimRate = (d) => (d?.distance_m > 0 && d.duration_sec > 0 ? d.distance_m / (d.duration_sec / 60) : null);
+export const swimRate = (d) => (!d?.fins && d?.distance_m > 0 && d.duration_sec > 0 ? d.distance_m / (d.duration_sec / 60) : null);
 
 export function homeCard(days, today, { seenWeek = null, settings } = {}) {
   const ws = weekStart(today);

@@ -111,7 +111,8 @@ function insights(days, start, today, cur, base) {
   }
 
   // 수영
-  const swimLaps = (ds) => ds.flatMap((d) => (days[d].swim?.swim?.lapStats ? [days[d].swim] : []));
+  // 오리발 낀 날은 스트로크·페이스 비교에서 뺀다
+  const swimLaps = (ds) => ds.flatMap((d) => (days[d].swim?.swim?.lapStats && !days[d].swim.fins ? [days[d].swim] : []));
   const wSwim = swimLaps(inWeek);
   if (wSwim.length) {
     const seenStrokes = new Set(swimLaps(before).flatMap((x) => x.swim.lapStats.byStroke.map((b) => b.stroke)));

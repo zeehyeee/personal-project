@@ -199,6 +199,24 @@ root.addEventListener('click', async (e) => {
     await reload();
     return;
   }
+  if (el('[data-gear]')) {
+    const b = el('[data-gear]');
+    const s = state.db.sessions.find((x) => x.id === b.dataset.session);
+    if (!s) return;
+    const list = String(s.gear ?? '').split(',').filter(Boolean);
+    const on = list.includes(b.dataset.gear);
+    const gear = (on ? list.filter((g) => g !== b.dataset.gear) : [...list, b.dataset.gear]).join(',') || null;
+    await store.updateSession({ ...s, gear });
+    await reload();
+    toast(on ? '오리발 표시를 지웠어요' : '오리발 착용으로 표시했어요');
+    return;
+  }
+  if (el('[data-memo-edit]')) {
+    state.memoEditing = el('[data-memo-edit]').dataset.memoEdit;
+    render();
+    root.querySelector('#memo-form textarea')?.focus();
+    return;
+  }
   if (el('[data-edit]')) {
     const s = state.db.sessions.find((x) => x.id === el('[data-edit]').dataset.edit);
     if (!s) return;
@@ -450,7 +468,8 @@ root.addEventListener('submit', async (e) => {
   const s = state.db.sessions.find((x) => x.id === form.dataset.session);
   if (!s) return;
   const memo = form.memo.value.trim();
-  if ((s.memo ?? '') === memo) return;
+  state.memoEditing = null;
+  if ((s.memo ?? '') === memo) return render();
   await store.updateSession({ ...s, memo: memo || null });
   await reload();
   toast(memo ? '메모를 저장했어요' : '메모를 지웠어요');

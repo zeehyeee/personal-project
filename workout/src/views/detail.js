@@ -5,7 +5,8 @@ import { formatDuration, formatPace } from '../format.js';
 import { flagRestLaps } from '../swim.js';
 import { lapRows, lapEditRows } from './lap-editor.js';
 import { recordsOn } from '../records.js';
-import { esc, ICONS, SPORT_ICON, CONDITIONS, dateLabelFull, km, int, dec1, emptyState } from '../ui.js';
+import { esc, ICONS, SPORT_ICON, CONDITIONS, FIN_ICON, dateLabelFull, km, int, dec1, emptyState } from '../ui.js';
+import { hasGear } from '../aggregate.js';
 
 const metric = (label, value, unit = '', input = '') =>
   `<div class="m"><span class="m-value">${input || value}${(input || value !== '-') && unit ? `<small>${unit}</small>` : ''}</span><span class="m-label">${label}</span></div>`;
@@ -114,6 +115,7 @@ export function renderDetail(state, date, sport) {
           <p class="muted">${dateLabelFull(date)}${day.sessionCount > 1 ? ` · ${day.sessionCount}세션 합산` : ''}</p>
         </div>
       </div>
+      ${day.fins ? `<div class="fin-badge">${FIN_ICON}오리발 착용</div>` : ''}
       ${badges}
       <section class="card">
         <div class="primary">
@@ -240,10 +242,20 @@ function noteSection(state, day) {
     <section class="card note-card">
       <h2>운동 어땠어요?</h2>
       <div class="conds">${chips}</div>
+      ${day.sport === 'swim' ? `
+      <div class="gears">
+        <button type="button" class="gear-btn" aria-pressed="${hasGear(s, 'fins')}" data-gear="fins" data-session="${esc(s.id)}">${FIN_ICON}오리발</button>
+        <span class="muted">${hasGear(s, 'fins') ? '이날은 페이스·SWOLF 비교와 신기록에서 빠져요' : '오리발을 낀 날은 눌러주세요'}</span>
+      </div>` : ''}
+      ${s.memo && state.memoEditing !== s.id ? `
+      <div class="memo-view">
+        <p>${esc(s.memo)}</p>
+        <button type="button" class="text-link" data-memo-edit="${esc(s.id)}">메모 수정</button>
+      </div>` : `
       <form class="memo-form" id="memo-form" data-session="${esc(s.id)}">
-        <span class="field-input"><input name="memo" maxlength="100" autocomplete="off" placeholder="한 줄 메모 (예: 킥판 연습)" value="${esc(s.memo ?? '')}"></span>
+        <span class="field-input memo-input"><textarea name="memo" maxlength="200" rows="2" placeholder="메모 (예: 킥판 연습)">${esc(s.memo ?? '')}</textarea></span>
         <button class="memo-save" type="submit">저장</button>
-      </form>
+      </form>`}
     </section>`;
 }
 

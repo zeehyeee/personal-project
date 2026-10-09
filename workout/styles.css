@@ -578,3 +578,26 @@ input, select, textarea { font-size: max(16px, 1em); }
 .inl-hint { margin-top: 8px; }
 .lap-edit-card { padding-top: 16px; padding-bottom: 16px; }
 .lap-edit-card .set-btn, .card > .set-btn { margin-top: 12px; }
+
+/* 오리발 */
+.fin { color: var(--swim); flex: none; }
+.gears { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.gears .muted { font-size: 12px; }
+.gear-btn {
+  flex: none; display: flex; align-items: center; gap: 4px; height: 38px; padding: 0 12px 0 8px; border: 0; border-radius: 10px;
+  background: var(--grey-100); color: var(--grey-600); font-size: var(--t7); font-weight: 600;
+}
+.gear-btn .fin { color: var(--grey-400); transform: rotate(-12deg); transition: transform .2s ease, color .2s; }
+.gear-btn[aria-pressed="true"] { background: color-mix(in srgb, var(--swim) 12%, white); color: var(--swim); box-shadow: inset 0 0 0 2px var(--swim); }
+.gear-btn[aria-pressed="true"] .fin { color: var(--swim); transform: rotate(8deg) scale(1.1); }
+.fin-badge { display: inline-flex; align-items: center; gap: 4px; margin: 0 0 12px; padding: 6px 12px 6px 8px; border-radius: 999px; background: color-mix(in srgb, var(--swim) 12%, white); color: var(--swim); font-size: var(--t7); font-weight: 700; }
+.fin-badge + .pr-badges { margin-top: -4px; }
+.row-fin .fin { width: 16px; height: 16px; vertical-align: -3px; }
+
+/* 메모: 저장한 건 글로 다 보이게, 고칠 때만 입력칸 */
+.memo-view { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--grey-50); }
+.memo-view p { margin: 0; font-size: var(--t6); line-height: 1.5; color: var(--grey-800); white-space: pre-wrap; word-break: break-word; }
+.memo-view .text-link { margin: 6px 0 0; padding: 0; }
+.memo-form { align-items: flex-end; }
+.memo-input { height: auto; padding: 10px 12px; }
+.memo-input textarea { flex: 1; width: 100%; border: 0; outline: 0; resize: none; background: transparent; font: inherit; font-size: 16px; line-height: 1.45; color: var(--text); field-sizing: content; min-height: 2.9em; }
