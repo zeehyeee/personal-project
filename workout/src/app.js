@@ -81,8 +81,8 @@ function render() {
     <div class="app">
       ${sub ? '' : `
       <header class="header">
-        <h1>운동 기록</h1>
-        <button class="add-btn" data-action="add">+ 기록</button>
+        <h1>바다네 체육관</h1>
+        <button class="add-btn" data-action="add">+ 운동</button>
         <button class="icon-btn" data-action="settings" aria-label="설정">${ICONS.gear}</button>
       </header>`}
       <main>

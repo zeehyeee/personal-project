@@ -1,4 +1,4 @@
-// 캘린더 탭: 연속 기록 헤드라인 → 월 캘린더 → 선택한 날 목록
+// 캘린더 탭: 연속 기록 두 줄 → 월 캘린더 → 선택한 날 목록 (오늘 기록이 없으면 할 일 한 줄 + 고양이)
 import { SPORTS, SPORT_META } from '../sports.js';
 import { monthGrid, monthKey, weekStart, addDays, weekLabel } from '../dates.js';
 import { weeklyReport } from '../report.js';
@@ -7,19 +7,18 @@ import { todayCoach } from '../coach.js';
 import { formatMinutes, formatDistance } from '../format.js';
 import { ICONS, SPORT_ICON, CONDITION_EMOJI, dateLabel, emptyState } from '../ui.js';
 
-// 토스식 배경 위 헤드라인: 연속 기록(가장 크게) → 할 일 한 줄 → 이번 주 7일 점
-function todayHero(state) {
-  const c = todayCoach(state.days, state.today);
+// 배경 위 두 줄: 연속 기록 · 이번 주 몇 일 → 이번 주 7일 점 (할 일 한 줄은 오늘 빈 칸에)
+function streakHero(c) {
   const WD = '일월화수목금토';
   const dots = c.week.map((d, i) => `
     <span class="wd ${d.done ? 'done' : ''}${d.today ? ' today' : ''}${d.future ? ' future' : ''}"><i></i>${WD[i]}</span>`).join('');
   return `
-    <section class="page-hero today-hero">
-      <span class="hero-label">연속 운동</span>
-      <span class="hero-value">${c.streak ? `🔥 ${c.streak}일 연속` : '🌱 새로 시작해요'}</span>
-      <span class="hero-sub">${c.text}</span>
+    <section class="streak-hero">
+      <div class="sh-top">
+        <b class="sh-streak ${c.streak ? '' : 'zero'}"><span class="flame">🔥</span>연속 ${c.streak}일</b>
+        <span class="sh-week">이번 주 <b>${c.weekDays}</b>/7일</span>
+      </div>
       <div class="week-dots">${dots}</div>
-      <span class="hero-foot">이번 주 <b>${c.weekDays}</b>/7일 · 이번 달 <b>${c.month.days}</b>/${c.month.elapsed}일</span>
     </section>`;
 }
 
@@ -53,14 +52,14 @@ function calendarCard(state) {
     </section>`;
 }
 
-function selectedDayCard(state) {
+function selectedDayCard(state, coach) {
   const date = state.selected;
   const day = state.days[date] ?? {};
   const sports = SPORTS.filter((s) => day[s]);
   const title = dateLabel(date, state.today);
   if (!sports.length) {
     const empty = date === state.today
-      ? emptyState('아직 기록이 없어요.', { action: 'data-action="add"', label: '+ 기록 추가', mood: 'hello' })
+      ? emptyState(coach.text, { action: 'data-action="add"', label: '+ 운동 추가', mood: 'hello' })
       : date > state.today ? emptyState('아직 오지 않은 날이에요.') : emptyState('이 날은 쉬었어요.');
     return `<section class="card"><div class="day-head"><h2>${title}</h2></div>${empty}</section>`;
   }
@@ -103,5 +102,6 @@ function cond(day, state) {
 }
 
 export function renderCalendar(state) {
-  return todayHero(state) + calendarCard(state) + selectedDayCard(state) + reportCard(state);
+  const coach = todayCoach(state.days, state.today);
+  return streakHero(coach) + calendarCard(state) + selectedDayCard(state, coach) + reportCard(state);
 }

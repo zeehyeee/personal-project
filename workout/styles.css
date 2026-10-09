@@ -87,9 +87,9 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
   display: grid; place-items: center; color: var(--text-2);
 }
 .icon-btn:active { background: var(--grey-200); }
-/* 기록 추가: 배경 없는 테두리 알약 (모니모 pay 버튼처럼), 설정은 맨 오른쪽 */
+/* 운동 추가: 배경 없는 테두리 버튼 (모니모 pay 버튼처럼), 둥근 정도는 칩과 같게. 설정은 맨 오른쪽 */
 .add-btn {
-  height: 34px; padding: 0 14px; border: 1px solid var(--grey-300); border-radius: 999px;
+  height: 34px; padding: 0 12px; border: 1px solid var(--grey-300); border-radius: 10px;
   background: transparent; color: var(--grey-800); font-weight: 600; font-size: var(--t7);
 }
 .add-btn:active { background: var(--grey-200); }
@@ -488,17 +488,20 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .detail-icon { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 30%, white); }
 
 /* ── 첫 화면 헤드라인: 연속 기록 + 이번 주 7일 ── */
-.today-hero { padding-bottom: 20px; }
-.today-hero .hero-sub { color: var(--grey-700); font-weight: 500; }
-.week-dots { display: flex; justify-content: space-between; max-width: 320px; margin-top: 14px; }
+.streak-hero { padding: 14px 4px 18px; }
+.sh-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sh-streak { display: flex; align-items: center; gap: 4px; font-size: var(--t5); font-weight: 700; }
+.sh-streak.zero { color: var(--grey-600); }
+.sh-streak.zero .flame { filter: grayscale(1); opacity: 0.45; }
+.sh-week { font-size: var(--t7); color: var(--grey-600); }
+.sh-week b { color: var(--text); }
+.week-dots { display: flex; justify-content: space-between; }
 .wd { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--grey-500); }
-.wd i { width: 28px; height: 28px; border-radius: 50%; background: var(--grey-200); }
-.wd.done i { background: var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px no-repeat; }
+.wd i { width: 26px; height: 26px; border-radius: 50%; background: var(--grey-200); }
+.wd.done i { background: var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat; }
 .wd.today { color: var(--grey-900); font-weight: 700; }
 .wd.today:not(.done) i { background: transparent; box-shadow: inset 0 0 0 2px var(--grey-900); }
 .wd.future i { background: transparent; box-shadow: inset 0 0 0 1.5px var(--grey-300); }
-.hero-foot { margin-top: 12px; font-size: var(--t7); color: var(--grey-600); }
-.hero-foot b { color: var(--text); }
 
 /* ── 이번 달 목표 배지 (달성 전: 회색 + 진행 고리 / 달성: 색이 찬 배지) ── */
 .gbadges { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
