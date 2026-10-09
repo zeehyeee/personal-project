@@ -82,8 +82,8 @@ function render() {
       ${sub ? '' : `
       <header class="header">
         <h1>운동 기록</h1>
+        <button class="add-btn" data-action="add">+ 기록</button>
         <button class="icon-btn" data-action="settings" aria-label="설정">${ICONS.gear}</button>
-        <button class="add-btn" data-action="add">+ 기록 추가</button>
       </header>`}
       <main>
         ${demo && !sub ? '<div class="banner"><span>예시 데이터로 보는 중이에요.</span><button data-action="clear-demo">예시 지우기</button></div>' : ''}

@@ -87,11 +87,12 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
   display: grid; place-items: center; color: var(--text-2);
 }
 .icon-btn:active { background: var(--grey-200); }
+/* 기록 추가: 배경 없는 테두리 알약 (모니모 pay 버튼처럼), 설정은 맨 오른쪽 */
 .add-btn {
-  height: 40px; padding: 0 16px; border: 0; border-radius: var(--radius-btn);
-  background: var(--primary); color: #fff; font-weight: 600; font-size: var(--t6);
+  height: 34px; padding: 0 14px; border: 1px solid var(--grey-300); border-radius: 999px;
+  background: transparent; color: var(--grey-800); font-weight: 600; font-size: var(--t7);
 }
-.add-btn:active { filter: brightness(0.92); }
+.add-btn:active { background: var(--grey-200); }
 
 main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom)); }
 
@@ -295,8 +296,8 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .chips-row { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 4px; padding: 2px 16px 8px; scrollbar-width: none; }
 .chips-row::-webkit-scrollbar { display: none; }
 .chip-btn {
-  flex: none; height: 40px; padding: 0 16px; border: 0; border-radius: 12px;
-  background: var(--grey-200); color: var(--grey-700); font-size: var(--t6); font-weight: 600; white-space: nowrap;
+  flex: none; height: 34px; padding: 0 12px; border: 0; border-radius: 10px;
+  background: var(--grey-200); color: var(--grey-700); font-size: var(--t7); font-weight: 600; white-space: nowrap;
 }
 .chip-btn[aria-pressed="true"] { background: var(--grey-800); color: #fff; }
 
