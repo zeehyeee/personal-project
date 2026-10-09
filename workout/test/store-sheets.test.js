@@ -38,7 +38,7 @@ function fakeAppsScript() {
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: (t) => ({ setMimeType: () => t }) },
   };
   vm.createContext(ctx);
-  const code = readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8').replace("const TOKEN = '여기를-나만-아는-비밀번호로-바꾸세요'", "const TOKEN = 't'");
+  const code = readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8').replace("const TOKEN = ''", "const TOKEN = 't'");
   vm.runInContext(code + '\nthis.doGet = doGet; this.doPost = doPost;', ctx);
   let down = false;
   const fetchImpl = async (url, opts) => {

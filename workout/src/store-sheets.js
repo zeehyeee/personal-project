@@ -26,7 +26,7 @@ function normalize(row) {
 export function readSheetConfig(storage = globalThis.localStorage) {
   try {
     const c = JSON.parse(storage.getItem(CONFIG_KEY));
-    return c?.url && c?.token ? c : null;
+    return c?.url ? c : null;
   } catch {
     return null;
   }
@@ -44,11 +44,11 @@ export function createSheetClient({ url, token }, fetchImpl = globalThis.fetch) 
   };
   return {
     async read() {
-      return (await call(await fetchImpl(`${url}?action=read&token=${encodeURIComponent(token)}`))).data;
+      return (await call(await fetchImpl(`${url}?action=read${token ? `&token=${encodeURIComponent(token)}` : ''}`))).data;
     },
     // Content-Type 을 붙이지 않아(text/plain) 브라우저 사전 요청 없이 Apps Script 로 보낸다
     async send(op) {
-      await call(await fetchImpl(url, { method: 'POST', body: JSON.stringify({ token, ...op }) }));
+      await call(await fetchImpl(url, { method: 'POST', body: JSON.stringify(token ? { token, ...op } : op) }));
     },
   };
 }

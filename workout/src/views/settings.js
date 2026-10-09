@@ -50,12 +50,12 @@ function sheetSection(state) {
     <section class="card set-card">
       <h2>구글 시트 연결</h2>
       <p class="muted">바다네 곳간처럼 구글 시트에 기록을 쌓아요. 다른 기기에서도 같은 기록을 볼 수 있어요.
-        시트의 Apps Script 를 웹 앱으로 배포한 주소와, 코드에 넣은 비밀번호를 입력하세요.</p>
+        시트의 Apps Script 를 웹 앱으로 배포한 주소를 넣으면, 앱을 열 때마다 시트와 맞춰요.</p>
       <form id="sheet-form" class="form sheet-form" novalidate>
         <label class="field"><span class="field-label">웹 앱 주소</span>
           <span class="field-input"><input name="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></span></label>
-        <label class="field"><span class="field-label">비밀번호 (Code.gs 의 TOKEN)</span>
-          <span class="field-input"><input name="token" type="password" autocomplete="off"></span></label>
+        <details class="field-more"><summary>비밀번호 <small>선택 · Code.gs 의 TOKEN 을 쓴 경우만</small></summary>
+          <span class="field-input" style="margin-top:8px"><input name="token" type="password" autocomplete="off"></span></details>
         <span class="field-error"></span>
         <button class="submit" type="submit">연결하기</button>
       </form>

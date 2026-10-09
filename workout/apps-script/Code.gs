@@ -4,12 +4,12 @@
  *
  * 설치
  * 1) 새 구글 시트 → 확장 프로그램 → Apps Script → 이 파일 내용을 붙여넣기
- * 2) 아래 TOKEN 을 아무도 모를 문장으로 바꾸기 (앱 설정에 같은 값을 넣는다)
- * 3) 배포 → 새 배포 → 유형: 웹 앱 / 실행: 나 / 액세스: 모든 사용자 → 배포 → 웹 앱 URL 복사
- * 4) 운동 기록 앱 → 설정 → 구글 시트 연결에 URL·비밀번호 입력
+ * 2) 배포 → 새 배포 → 유형: 웹 앱 / 실행: 나 / 액세스: 모든 사용자 → 배포 → 웹 앱 URL 복사
+ * 3) 운동 기록 앱 → 설정 → 구글 시트 연결에 URL 입력
+ * (선택) 아래 TOKEN 에 문장을 넣으면 앱 설정에도 같은 비밀번호를 넣어야 읽고 쓸 수 있다. 비워 두면 주소만으로 연결
  * 시트 탭(sessions, swim_laps, settings)은 처음 요청 때 자동으로 만든다.
  */
-const TOKEN = '여기를-나만-아는-비밀번호로-바꾸세요';
+const TOKEN = ''; // 비워 두면 비밀번호 없이 (바다네 곳간과 같은 방식)
 
 const SHEETS = {
   sessions: ['id', 'date', 'start_time', 'sport', 'duration_sec', 'distance_m', 'kcal', 'avg_hr', 'avg_cadence',
@@ -23,7 +23,7 @@ const TEXT_COLUMNS = { sessions: ['id', 'date', 'start_time', 'sport', 'source',
 
 function doGet(e) {
   const p = e.parameter || {};
-  if (p.token !== TOKEN) return json_({ ok: false, error: 'token' });
+  if (TOKEN && p.token !== TOKEN) return json_({ ok: false, error: 'token' });
   if (p.action === 'read') return json_({ ok: true, data: readAll_() });
   return json_({ ok: false, error: 'unknown action' });
 }
@@ -32,7 +32,7 @@ function doGet(e) {
 function doPost(e) {
   let body;
   try { body = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'bad json' }); }
-  if (body.token !== TOKEN) return json_({ ok: false, error: 'token' });
+  if (TOKEN && body.token !== TOKEN) return json_({ ok: false, error: 'token' });
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {

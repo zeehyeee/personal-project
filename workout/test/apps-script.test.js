@@ -50,7 +50,7 @@ function load() {
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: (t) => ({ setMimeType: () => JSON.parse(t) }) },
   };
   vm.createContext(ctx);
-  const code = readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8').replace("const TOKEN = '여기를-나만-아는-비밀번호로-바꾸세요'", "const TOKEN = 't'");
+  const code = readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8').replace("const TOKEN = ''", "const TOKEN = 't'");
   vm.runInContext(code + '\nthis.doGet = doGet; this.doPost = doPost;', ctx);
   const post = (body) => ctx.doPost({ postData: { contents: JSON.stringify({ token: 't', ...body }) } });
   const read = () => ctx.doGet({ parameter: { token: 't', action: 'read' } });
@@ -64,6 +64,19 @@ test('토큰이 틀리면 거절', () => {
   const { ctx } = load();
   assert.equal(ctx.doGet({ parameter: { token: 'x', action: 'read' } }).ok, false);
   assert.equal(ctx.doPost({ postData: { contents: '{"token":"x","action":"addSessions"}' } }).ok, false);
+});
+
+test('TOKEN 을 비워 두면 비밀번호 없이 읽고 쓴다', () => {
+  const ctx = {
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: () => null, insertSheet: () => ({ getLastRow: () => 1, getMaxRows: () => 10, setFrozenRows() {}, getRange: () => ({ setValues() {}, setNumberFormat() {} }) }) }) },
+    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    Session: { getScriptTimeZone: () => 'Asia/Seoul' },
+    Utilities: { formatDate: () => '' },
+    ContentService: { MimeType: { JSON: 'json' }, createTextOutput: (t) => ({ setMimeType: () => JSON.parse(t) }) },
+  };
+  vm.createContext(ctx);
+  vm.runInContext(readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8') + '\nthis.doGet = doGet;', ctx);
+  assert.equal(ctx.doGet({ parameter: { action: 'read' } }).ok, true);
 });
 
 test('추가 → 읽기, 같은 id 재전송은 중복 안 됨', () => {
