@@ -220,7 +220,7 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
   background: color-mix(in srgb, var(--c) 14%, white); color: var(--text); font-weight: 600;
   box-shadow: inset 0 0 0 2px var(--c);
 }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field[hidden] { display: none; }
 .field-label { font-size: var(--t7); color: var(--grey-600); }
@@ -236,7 +236,7 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 }
 .field-input input::placeholder { font-size: var(--t6); color: var(--grey-400); }
 .field-input em { font-style: normal; font-size: var(--t7); color: var(--muted); white-space: nowrap; }
-.duration { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.duration { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .field-error { font-size: 12px; color: var(--red-500); min-height: 0; }
 .field-error:empty { display: none; }
 .dup { padding: 12px 14px; border-radius: 12px; background: var(--orange-50); font-size: var(--t7); color: var(--grey-800); }
@@ -539,3 +539,13 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .lap-edit.bad .le-in:has(input:placeholder-shown) { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--red-500) 60%, white); }
 .le-all { display: block; margin: 8px 0 0 auto; }
 .cap-card details + details { margin-top: 10px; }
+
+/* 휴대폰에서 화면이 옆으로 밀리거나 확대되지 않게
+   - 칸이 내용(날짜 입력 등) 때문에 카드 밖으로 넓어지지 않게 최소 폭 0
+   - iOS 는 글자가 16px 보다 작은 입력칸을 누르면 화면을 확대해서, 입력칸은 모두 16px 이상 */
+.field, .field-input, .row2 > *, .duration > * { min-width: 0; }
+.field-input input { width: 100%; }
+input, select, textarea { font-size: max(16px, 1em); }
+.field-input input, .le-in input, .lap-edit select, .memo-form input, .set-input input { font-size: 16px; }
+.field-input input[type="date"], .field-input input[type="time"] { -webkit-appearance: none; appearance: none; min-height: 1.4em; text-align: left; }
+html, body { overflow-x: hidden; }
