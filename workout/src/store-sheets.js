@@ -8,7 +8,7 @@ const CONFIG_KEY = 'workout-log:sheet';
 
 const NUMERIC = ['duration_sec', 'distance_m', 'kcal', 'avg_hr', 'avg_cadence', 'swim_laps', 'swim_total_strokes', 'pool_length_m',
   'zone_max_min', 'zone_high_min', 'zone_mid_min', 'zone_low_min', 'lap_no', 'time_sec', 'strokes'];
-const TEXT = ['id', 'date', 'start_time', 'sport', 'source', 'session_id', 'stroke'];
+const TEXT = ['id', 'date', 'start_time', 'sport', 'source', 'session_id', 'stroke', 'condition', 'memo'];
 
 // 시트 값 → 앱 값 (빈칸은 null, 숫자 칸은 숫자, 글자 칸은 글자)
 function normalize(row) {
@@ -99,6 +99,11 @@ export function createSyncedStore(local, client, storage = globalThis.localStora
       const send = real(sessions);
       const ids = new Set(send.map((s) => s.id));
       if (send.length) enqueue({ action: 'addSessions', sessions: send, laps: laps.filter((l) => ids.has(l.session_id)) });
+      await flush();
+    },
+    async updateSession(session) {
+      await local.updateSession(session);
+      if (session.source !== 'demo') enqueue({ action: 'updateSession', session });
       await flush();
     },
     async deleteSessions(ids) {

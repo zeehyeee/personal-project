@@ -1,5 +1,6 @@
 // 화면 공용 헬퍼: 이스케이프, 아이콘, 수치 표기
 import { parseDate } from './dates.js';
+import { cat } from './mascot.js';
 
 export const esc = (v) =>
   String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -35,3 +36,17 @@ const fmt = (v, f) => (v == null || !Number.isFinite(v) ? '-' : f(v));
 export const km = (m) => fmt(m, (v) => (v / 1000).toFixed(2));
 export const int = (v) => fmt(v, (x) => Math.round(x).toLocaleString('ko-KR'));
 export const dec1 = (v) => fmt(v, (x) => x.toFixed(1));
+
+// 빈 화면: 쉬는 고양이 + 한 줄 + (선택) 버튼
+export function emptyState(text, { action = '', label = '', mood = 'rest' } = {}) {
+  return `<div class="empty">${cat({ size: 64, mood })}<p>${text}</p>${action ? `<button class="empty-btn" ${action}>${label}</button>` : ''}</div>`;
+}
+
+// 컨디션 (운동마다 하나)
+export const CONDITIONS = [
+  ['tough', '😮‍💨', '힘들었어'],
+  ['ok', '🙂', '보통'],
+  ['good', '😄', '좋았어'],
+  ['great', '🤩', '최고'],
+];
+export const CONDITION_EMOJI = Object.fromEntries(CONDITIONS.map(([k, e]) => [k, e]));

@@ -14,12 +14,12 @@ const TOKEN = ''; // 비워 두면 비밀번호 없이 (바다네 곳간과 같�
 const SHEETS = {
   sessions: ['id', 'date', 'start_time', 'sport', 'duration_sec', 'distance_m', 'kcal', 'avg_hr', 'avg_cadence',
     'swim_laps', 'swim_total_strokes', 'pool_length_m', 'zone_max_min', 'zone_high_min', 'zone_mid_min', 'zone_low_min',
-    'source', 'saved_at'],
+    'source', 'saved_at', 'condition', 'memo'],
   swim_laps: ['session_id', 'lap_no', 'stroke', 'time_sec', 'strokes'],
   settings: ['key', 'value'],
 };
 // 날짜·시각이 시트에서 날짜 형식으로 바뀌지 않게 글자로 둔다
-const TEXT_COLUMNS = { sessions: ['id', 'date', 'start_time', 'sport', 'source', 'saved_at'], swim_laps: ['session_id', 'stroke'], settings: ['key'] };
+const TEXT_COLUMNS = { sessions: ['id', 'date', 'start_time', 'sport', 'source', 'saved_at', 'condition', 'memo'], swim_laps: ['session_id', 'stroke'], settings: ['key'] };
 
 function doGet(e) {
   const p = e.parameter || {};
@@ -37,6 +37,7 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     if (body.action === 'addSessions') addSessions_(body.sessions || [], body.laps || []);
+    else if (body.action === 'updateSession') updateSession_(body.session || {});
     else if (body.action === 'deleteSessions') deleteSessions_(body.ids || []);
     else if (body.action === 'saveSettings') saveSettings_(body.patch || {});
     else if (body.action === 'replaceAll') replaceAll_(body.sessions || [], body.laps || [], body.settings || {});
@@ -56,6 +57,11 @@ function sheet_(name) {
     sh.getRange(1, 1, 1, head.length).setValues([head]);
     (TEXT_COLUMNS[name] || []).forEach((c) => sh.getRange(1, head.indexOf(c) + 1, sh.getMaxRows(), 1).setNumberFormat('@'));
     sh.setFrozenRows(1);
+  } else if (sh.getLastColumn() < SHEETS[name].length) {
+    // 예전 버전으로 만든 시트: 뒤에 새 칸(컨디션·메모 등) 머리글을 붙인다
+    const head = SHEETS[name];
+    sh.getRange(1, 1, 1, head.length).setValues([head]);
+    (TEXT_COLUMNS[name] || []).forEach((c) => sh.getRange(1, head.indexOf(c) + 1, sh.getMaxRows(), 1).setNumberFormat('@'));
   }
   return sh;
 }
@@ -102,6 +108,20 @@ function addSessions_(sessions, laps) {
   const now = new Date().toISOString();
   append_('sessions', fresh.map((s) => Object.assign({}, s, { saved_at: now })));
   append_('swim_laps', laps.filter((l) => ids[l.session_id]));
+}
+
+// 수정·메모: 같은 id 행을 덮어쓴다 (없으면 새로 추가)
+function updateSession_(s) {
+  if (!s.id) return;
+  const sh = sheet_('sessions');
+  const head = SHEETS.sessions;
+  const last = sh.getLastRow();
+  const ids = last < 2 ? [] : sh.getRange(2, 1, last - 1, 1).getValues().map((r) => r[0]);
+  const i = ids.indexOf(s.id);
+  if (i < 0) return append_('sessions', [Object.assign({}, s, { saved_at: new Date().toISOString() })]);
+  const saved = sh.getRange(i + 2, head.indexOf('saved_at') + 1, 1, 1).getValues()[0][0];
+  const row = head.map((h) => (h === 'saved_at' ? saved : s[h] === null || s[h] === undefined ? '' : s[h]));
+  sh.getRange(i + 2, 1, 1, head.length).setValues([row]);
 }
 
 function deleteWhere_(name, col, ids) {

@@ -26,11 +26,14 @@
   --primary: var(--blue-500);
   --streak-bg: var(--orange-50);
 
-  /* 종목 색 (비주얼 마감 때 확정) */
-  --walk: #15c47e;
-  --run: #ff8a00;
-  --bike: #18b5c8;
+  /* 종목 색: 수영 파랑 · 달리기 주황 · 걷기 초록 · 자전거 보라 */
   --swim: #3182f6;
+  --run: #ff8a00;
+  --walk: #15c47e;
+  --bike: #8b5cf6;
+  --green-600: #0b9d58;
+  --gold-50: #fff4d6;
+  --gold-700: #8a5a00;
 
   /* 글자 크기 단계 */
   --t1: 30px;
@@ -49,13 +52,26 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  /* 이모지는 토스페이스로 통일 (기기마다 다르게 보이지 않게) */
+  font-family: 'Pretendard Variable', Pretendard, Tossface, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   word-break: keep-all;
 }
 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* 숫자는 자릿수 폭을 맞춰 흔들리지 않게 */
+.hero-value, .tsel-value, .primary-value, .m-value, .stat-value, .tile-amount, .cp-value, .goal-num, .lap-val, .cap-main { font-variant-numeric: tabular-nums; }
+
+/* 터치 피드백: 누르면 살짝 작아지고 어두워진다 (토스 앱처럼) */
+.tile, .report-card, .choice, .chip-btn, .add-btn, .submit, .set-btn, .cond-btn, .empty-btn, .memo-save, .pills button, .tbar, .icon-btn, .tab, .text-link, .cal-day .num, .sessions button {
+  transition: transform .12s ease, filter .12s ease, background-color .15s ease;
+}
+.tile:active, .report-card:active, .choice:active, .chip-btn:active, .add-btn:active, .submit:active, .set-btn:active,
+.cond-btn:active, .empty-btn:active, .memo-save:active, .tab:active, .sessions button:active { transform: scale(0.96); }
+.tbar:active, .text-link:active, .pills button:active { transform: scale(0.92); }
+.cal-day:active .num { background: var(--grey-200); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 .app { max-width: 480px; margin: 0 auto; min-height: 100dvh; }
 
@@ -321,7 +337,7 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .tsel-value { font-size: var(--t1); font-weight: 800; letter-spacing: -0.5px; }
 .tsel-sub { font-size: var(--t7); color: var(--grey-600); }
 .text-link { margin-top: 6px; border: 0; background: transparent; color: var(--primary); font-size: var(--t7); font-weight: 600; }
-.chg.up { color: #0b9d58; }
+.chg.up { color: var(--green-600); }
 .chg.down { color: var(--red-500); }
 .chg.same { color: var(--grey-500); }
 
@@ -397,14 +413,14 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 
 /* ── 신기록 ─────────────────────────────── */
 .pr-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.pr-badge { padding: 6px 12px; border-radius: 999px; background: #fff4d6; color: #8a5a00; font-size: var(--t7); font-weight: 600; }
-.tile-pr { margin-left: auto; font-size: 11px; color: #8a5a00; }
+.pr-badge { padding: 6px 12px; border-radius: 999px; background: var(--gold-50); color: var(--gold-700); font-size: var(--t7); font-weight: 600; }
+.tile-pr { margin-left: auto; font-size: 11px; color: var(--gold-700); }
 .records { border-top: 0; padding-top: 4px; }
 .records li { align-items: center; padding: 8px 0; }
 .records li > span:last-child { display: flex; flex-direction: column; align-items: flex-end; }
 .records b { color: var(--text); font-size: var(--t6); }
 .records small { font-size: 11px; color: var(--grey-500); }
-.pr-new { font-style: normal; margin-left: 4px; padding: 2px 6px; border-radius: 6px; background: #fff4d6; color: #8a5a00; font-size: 11px; }
+.pr-new { font-style: normal; margin-left: 4px; padding: 2px 6px; border-radius: 6px; background: var(--gold-50); color: var(--gold-700); font-size: 11px; }
 
 /* ── 설정 ───────────────────────────────── */
 .set-card h2 { margin-bottom: 2px; }
@@ -421,10 +437,85 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 }
 .set-btn.danger { color: var(--red-500); }
 .hero-sub .goal { color: var(--text); }
-.hero-sub .goal.done { color: #0b9d58; }
+.hero-sub .goal.done { color: var(--green-600); }
 .header .icon-btn { color: var(--grey-600); }
 
 .sync-line { margin: 4px 0 6px; font-size: var(--t6); font-weight: 600; }
-.sync-line.ok { color: #0b9d58; }
+.sync-line.ok { color: var(--green-600); }
 .sync-line.warn { color: var(--red-500); }
 .sheet-form { margin: 12px 0 8px; gap: 12px; }
+
+/* ── 오늘 카드 (고양이 + 말풍선) ─────────── */
+.coach { background: var(--surface); border-radius: var(--radius-card); padding: 18px 18px 14px; margin-bottom: 12px; }
+.coach-top { display: flex; align-items: center; gap: 10px; }
+.coach-cat { flex: none; display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: color-mix(in srgb, var(--swim) 10%, white); }
+.coach.mood-proud .coach-cat { background: var(--gold-50); }
+.bubble {
+  position: relative; flex: 1; margin: 0; padding: 12px 14px; border-radius: 16px;
+  background: var(--grey-100); font-size: var(--t6); font-weight: 600; line-height: 1.45; color: var(--grey-900);
+}
+.bubble::before {
+  content: ''; position: absolute; left: -6px; top: 50%; margin-top: -6px;
+  border: 6px solid transparent; border-left: 0; border-right-color: var(--grey-100);
+}
+.coach-progress { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.cp { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: var(--radius-item); background: var(--grey-50); }
+.cp-label { font-size: 12px; color: var(--grey-600); }
+.cp-value { font-size: var(--t7); color: var(--grey-500); }
+.cp-value b { font-size: var(--t4); font-weight: 800; color: var(--text); margin-right: 1px; }
+.cp-bar, .goal-bar { display: block; height: 6px; border-radius: 3px; background: var(--grey-200); overflow: hidden; }
+.cp-bar i, .goal-bar i { display: block; height: 100%; border-radius: 3px; background: var(--primary); transition: width .4s ease; }
+.coach-foot { display: flex; justify-content: space-between; margin-top: 12px; padding: 0 2px; font-size: var(--t7); color: var(--grey-600); }
+.coach-foot b { color: var(--text); }
+.tile-cond { font-size: 14px; }
+
+/* ── 빈 화면 ─────────────────────────────── */
+.empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0 6px; text-align: center; }
+.empty p { margin: 0; font-size: var(--t6); color: var(--grey-600); }
+.empty .cat { opacity: 0.95; }
+.empty-btn { margin-top: 4px; height: 40px; padding: 0 18px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--primary) 12%, white); color: var(--primary); font-weight: 700; font-size: var(--t6); }
+
+/* ── 이번 달 목표 ────────────────────────── */
+.goals { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.goals li { display: grid; grid-template-columns: 1fr auto auto; grid-template-areas: "name hint num" "bar bar bar"; align-items: baseline; gap: 6px 10px; }
+.goal-name { grid-area: name; font-size: var(--t6); font-weight: 600; }
+.goal-num { grid-area: num; font-size: var(--t7); color: var(--grey-500); }
+.goal-num b { font-size: var(--t5); font-weight: 800; color: var(--text); }
+.goal-bar { grid-area: bar; height: 8px; border-radius: 4px; }
+.goal-bar i { background: var(--c); border-radius: 4px; }
+.goal-hint { grid-area: hint; font-size: 12px; color: var(--grey-500); }
+.badge { font-style: normal; display: inline-block; padding: 2px 8px; border-radius: 6px; background: color-mix(in srgb, var(--green-600) 12%, white); color: var(--green-600); font-weight: 700; }
+
+/* ── 성장 그래프 ─────────────────────────── */
+.chips-row.inner { margin: 10px 0 2px; padding: 0 0 4px; }
+.chip-btn.small { height: 34px; padding: 0 12px; font-size: var(--t7); border-radius: 10px; background: var(--grey-100); }
+.chip-btn.small[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 14%, white); color: var(--c); box-shadow: inset 0 0 0 1.5px var(--c); }
+.growth-svg { width: 100%; height: auto; margin-top: 8px; overflow: visible; }
+.growth-svg polyline { fill: none; stroke: var(--c); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.growth-svg circle { fill: var(--surface); stroke: var(--c); stroke-width: 2; }
+.growth-svg circle.now { fill: var(--c); }
+.growth-svg circle.best { fill: #ffc94d; stroke: #e0a400; }
+.growth-svg text { text-anchor: middle; font-size: 11px; fill: var(--grey-500); }
+.growth-svg text.v { fill: var(--grey-900); font-weight: 700; font-size: 12px; }
+.growth-svg text.v.best { fill: var(--gold-700); }
+.growth-sum { margin: 8px 0 2px; text-align: center; font-size: var(--t5); font-weight: 700; }
+.growth-sum.up { color: var(--green-600); }
+.growth-sum.down { color: var(--grey-700); }
+.center { text-align: center; }
+.dot-best { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ffc94d; margin-right: 2px; }
+
+/* ── 상세: 컨디션·메모 ────────────────────── */
+.conds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
+.cond-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0; border: 0; border-radius: var(--radius-btn); background: var(--grey-100); font-size: 12px; color: var(--grey-600); }
+.cond-btn span { font-size: 24px; line-height: 1.1; filter: grayscale(0.6); opacity: 0.7; }
+.cond-btn[aria-pressed="true"] { background: color-mix(in srgb, var(--c, var(--primary)) 12%, white); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 2px var(--c, var(--primary)); }
+.cond-btn[aria-pressed="true"] span { filter: none; opacity: 1; }
+.memo-form { display: flex; gap: 8px; margin-top: 10px; }
+.memo-form .field-input { flex: 1; height: 44px; }
+.memo-form input { font-size: var(--t6); }
+.memo-save { flex: none; height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--grey-800); color: #fff; font-weight: 600; font-size: var(--t7); }
+.sessions li > span:last-child { display: flex; }
+.sessions button.edit { color: var(--grey-700); }
+
+/* 상세 머리: 종목색 원 */
+.detail-icon { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 30%, white); }

@@ -4,7 +4,7 @@ import { SPORT_META, STROKE_NAMES, ZONE_KEYS, ZONE_META } from '../sports.js';
 import { formatDuration, formatPace } from '../format.js';
 import { flagRestLaps } from '../swim.js';
 import { recordsOn } from '../records.js';
-import { esc, ICONS, SPORT_ICON, dateLabelFull, km, int, dec1 } from '../ui.js';
+import { esc, ICONS, SPORT_ICON, CONDITIONS, dateLabelFull, km, int, dec1, emptyState } from '../ui.js';
 
 const metric = (label, value, unit = '') =>
   `<div class="m"><span class="m-value">${value}${value !== '-' && unit ? `<small>${unit}</small>` : ''}</span><span class="m-label">${label}</span></div>`;
@@ -87,7 +87,7 @@ export function renderDetail(state, date, sport) {
   const day = state.days[date]?.[sport];
   const back = `<button class="icon-btn" data-action="back" aria-label="뒤로">${ICONS.left}</button>`;
   if (!day) {
-    return `<div class="detail">${back}<section class="card"><p class="muted">기록을 찾을 수 없어요.</p></section></div>`;
+    return `<div class="detail">${back}<section class="card">${emptyState('기록을 찾을 수 없어요.')}</section></div>`;
   }
   const { second, third } = levels(day);
   const prs = recordsOn(state.days, sport, date);
@@ -114,6 +114,7 @@ export function renderDetail(state, date, sport) {
         <ul class="sub">${third.join('')}</ul>
         ${lapNote(day)}
       </section>
+      ${noteSection(state, day)}
       ${zoneSection(day)}
       ${strokeSection(day)}
       ${lapSection(state, day)}
@@ -185,17 +186,35 @@ function lapSection(state, day) {
     </section>`;
 }
 
+// 컨디션·한 줄 메모: 그날 그 종목의 첫 세션에 저장한다
+function noteSection(state, day) {
+  const s = daySessions(state, day)[0];
+  const chips = CONDITIONS.map(([k, e, label]) => `
+    <button type="button" class="cond-btn" aria-pressed="${s.condition === k}" data-condition="${k}" data-session="${esc(s.id)}"><span>${e}</span>${label}</button>`).join('');
+  return `
+    <section class="card note-card">
+      <h2>운동 어땠어요?</h2>
+      <div class="conds">${chips}</div>
+      <form class="memo-form" id="memo-form" data-session="${esc(s.id)}">
+        <span class="field-input"><input name="memo" maxlength="100" autocomplete="off" placeholder="한 줄 메모 (예: 킥판 연습)" value="${esc(s.memo ?? '')}"></span>
+        <button class="memo-save" type="submit">저장</button>
+      </form>
+    </section>`;
+}
+
+const daySessions = (state, day) => state.db.sessions
+  .filter((s) => day.sessionIds.includes(s.id))
+  .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+
 const SOURCE = { manual: '직접 입력', capture: '캡처', demo: '예시' };
 
-// 잘못 넣은 기록을 지울 수 있게 세션 단위로 보여준다
+// 잘못 넣은 기록을 고치거나 지울 수 있게 세션 단위로 보여준다
 function sessionList(state, day) {
-  const rows = state.db.sessions
-    .filter((s) => day.sessionIds.includes(s.id))
-    .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+  const rows = daySessions(state, day)
     .map((s) => `
       <li>
         <span>${s.start_time ? esc(s.start_time) + ' · ' : ''}${formatDuration(s.duration_sec)} · ${SOURCE[s.source] ?? esc(s.source)}</span>
-        <button data-delete="${esc(s.id)}">삭제</button>
+        <span><button class="edit" data-edit="${esc(s.id)}">수정</button><button data-delete="${esc(s.id)}">삭제</button></span>
       </li>`).join('');
   return `<section class="sessions"><p class="muted">기록 ${day.sessionCount}건</p><ul>${rows}</ul></section>`;
 }

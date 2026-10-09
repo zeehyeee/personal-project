@@ -1,5 +1,5 @@
 // 데이터 저장소. 지금은 브라우저 localStorage, 나중에 Google Sheets 로 바꾼다.
-// 화면 코드는 이 인터페이스(load / addSessions / deleteSessions / saveSettings)만 쓴다.
+// 화면 코드는 이 인터페이스(load / addSessions / updateSession / deleteSessions / saveSettings)만 쓴다.
 // Sheets 로 바꿔도 같은 모양을 유지하도록 모든 메서드는 Promise 를 돌려준다.
 import { DEFAULT_SETTINGS } from './sports.js';
 import { demoData } from './demo.js';
@@ -51,6 +51,14 @@ export function createLocalStore(storage = globalThis.localStorage) {
       const db = current();
       db.sessions.push(...sessions);
       db.laps.push(...laps);
+      write(db);
+    },
+    // 수정·메모: 같은 id 의 기록을 통째로 바꾼다 (구간 기록은 그대로)
+    async updateSession(session) {
+      const db = current();
+      const i = db.sessions.findIndex((s) => s.id === session.id);
+      if (i < 0) throw new Error('기록을 찾을 수 없어요.');
+      db.sessions[i] = session;
       write(db);
     },
     async deleteSessions(ids) {

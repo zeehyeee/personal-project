@@ -1,26 +1,36 @@
-// 캘린더 탭: 스트릭 한 줄 → 월 캘린더 → 선택한 날 블록
+// 캘린더 탭: 오늘 카드(고양이 + 할 일 한 줄 + 이번 주 진행) → 월 캘린더 → 선택한 날 블록
 import { SPORTS, SPORT_META } from '../sports.js';
 import { monthGrid, monthKey, weekStart, addDays, weekLabel } from '../dates.js';
 import { weeklyReport } from '../report.js';
 import { recordsOn } from '../records.js';
-import { streak, monthActiveDays } from '../streak.js';
+import { todayCoach } from '../coach.js';
+import { cat } from '../mascot.js';
 import { formatMinutes, formatDistance } from '../format.js';
-import { ICONS, SPORT_ICON, dateLabel } from '../ui.js';
+import { ICONS, SPORT_ICON, CONDITION_EMOJI, dateLabel, emptyState } from '../ui.js';
 
-function streakLine(state) {
-  const active = Object.keys(state.days);
-  const s = streak(active, state.today);
-  const monthDays = monthActiveDays(active, state.today);
-  // 분모는 오늘 날짜(이번 달 지난 날 수): 매일 운동이 목표라서
-  const elapsed = Number(state.today.slice(8));
-  let main;
-  if (s.days === 0) main = '오늘 운동하면 <b>1일차</b>';
-  else if (s.untilYesterday) main = `어제까지 <b>${s.days}일</b> · 오늘도 이어가요`;
-  else main = `운동 <b>${s.days}일차</b>`;
+// 곳간의 캐릭터 말풍선 + 토스식 숫자 위계: 말풍선(할 일) → 진행 막대 2개 → 연속·이번 달
+function coachCard(state) {
+  const c = todayCoach(state.days, state.today, state.db.settings);
+  const bar = (label, v, goal, unit) => `
+    <div class="cp">
+      <span class="cp-label">${label}</span>
+      <span class="cp-value"><b>${v}</b>/${goal}${unit}</span>
+      <span class="cp-bar"><i style="width:${Math.min(100, (v / goal) * 100).toFixed(1)}%"></i></span>
+    </div>`;
   return `
-    <section class="streak">
-      <span class="streak-main">🔥 ${main}</span>
-      <span class="streak-month">이번 달 <b>${monthDays}</b>/${elapsed}일</span>
+    <section class="coach mood-${c.mood}">
+      <div class="coach-top">
+        <span class="coach-cat">${cat({ size: 68, mood: c.mood })}</span>
+        <p class="bubble">${c.text}</p>
+      </div>
+      <div class="coach-progress">
+        ${bar('이번 주 운동일', c.week.days, c.week.daysGoal, '일')}
+        ${bar('이번 주 운동 시간', c.week.minutes, c.week.minutesGoal, '분')}
+      </div>
+      <div class="coach-foot">
+        <span>🔥 ${c.streak ? `<b>${c.streak}일</b> 연속` : '연속 기록 시작 전'}</span>
+        <span>이번 달 <b>${c.month.days}</b>/${c.month.elapsed}일</span>
+      </div>
     </section>`;
 }
 
@@ -60,13 +70,15 @@ function selectedDayCard(state) {
   const sports = SPORTS.filter((s) => day[s]);
   const title = dateLabel(date, state.today);
   if (!sports.length) {
-    const empty = date === state.today ? '아직 기록이 없어요.' : '이 날은 쉬었어요.';
-    return `<section class="card"><div class="day-head"><h2>${title}</h2></div><p class="muted">${empty}</p></section>`;
+    const empty = date === state.today
+      ? emptyState('아직 기록이 없어요.', { action: 'data-action="add"', label: '+ 기록 추가', mood: 'hello' })
+      : date > state.today ? emptyState('아직 오지 않은 날이에요.') : emptyState('이 날은 쉬었어요.');
+    return `<section class="card"><div class="day-head"><h2>${title}</h2></div>${empty}</section>`;
   }
   // 1줄: 아이콘 + 종목명 / 2줄: 운동 시간(크게) + 거리(작게)
   const tiles = sports.map((s) => `
     <button class="tile" data-detail="${date}/${s}" style="--c: var(--${s})">
-      <span class="tile-name"><span class="tile-icon">${SPORT_ICON[s]}</span>${SPORT_META[s].name}${recordsOn(state.days, s, date).length ? '<span class="tile-pr">🏅 신기록</span>' : ''}</span>
+      <span class="tile-name"><span class="tile-icon">${SPORT_ICON[s]}</span>${SPORT_META[s].name}${cond(day[s], state)}${recordsOn(state.days, s, date).length ? '<span class="tile-pr">🏅 신기록</span>' : ''}</span>
       <span class="tile-amount">${formatMinutes(day[s].duration_sec)}<small>${formatDistance(s, day[s].distance_m)}</small></span>
     </button>`).join('');
   return `
@@ -90,6 +102,12 @@ function reportCard(state) {
     </button>`;
 }
 
+// 그날 그 종목에 남긴 컨디션 (첫 세션 기준)
+function cond(day, state) {
+  const first = state.db.sessions.filter((x) => day.sessionIds.includes(x.id)).find((x) => x.condition);
+  return first ? ` <span class="tile-cond">${CONDITION_EMOJI[first.condition] ?? ''}</span>` : '';
+}
+
 export function renderCalendar(state) {
-  return streakLine(state) + calendarCard(state) + selectedDayCard(state) + reportCard(state);
+  return coachCard(state) + calendarCard(state) + selectedDayCard(state) + reportCard(state);
 }

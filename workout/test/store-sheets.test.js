@@ -18,6 +18,7 @@ function fakeAppsScript() {
     const grid = [];
     return {
       getLastRow: () => grid.length, getMaxRows: () => 1000, setFrozenRows() {},
+      getLastColumn: () => Math.max(0, ...grid.map((r) => r.length)),
       appendRow: (row) => grid.push([...row]),
       deleteRow: (r) => grid.splice(r - 1, 1),
       deleteRows: (r, n) => grid.splice(r - 1, n),
@@ -94,4 +95,18 @@ test('비밀번호가 틀리면 사본으로 보여주고 이유를 알려준다
   await store.load();
   assert.equal(store.status.online, false);
   assert.equal(store.status.error, '비밀번호가 맞지 않아요.');
+});
+
+test('기록 수정·메모: 휴대폰과 시트 모두 바뀌고, 구간 기록은 그대로', async () => {
+  const api = fakeAppsScript();
+  const storage = memoryStorage();
+  const store = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, api.fetchImpl), storage);
+  await store.load();
+  await store.addSessions([run], []);
+  await store.updateSession({ ...run, duration_sec: 1600, condition: 'great', memo: '한강' });
+  const db = await store.load();
+  assert.equal(db.sessions.length, 1);
+  assert.equal(db.sessions[0].duration_sec, 1600);
+  assert.equal(db.sessions[0].condition, 'great');
+  assert.equal(db.sessions[0].memo, '한강');
 });

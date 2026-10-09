@@ -9,7 +9,7 @@ import { renderCalendar } from './views/calendar.js';
 import { renderDetail } from './views/detail.js';
 import { renderWeekly } from './views/weekly.js';
 import { renderAddChoice, renderManual, syncManualFields } from './views/add.js';
-import { buildManualSession } from './manual.js';
+import { buildManualSession, formFromSession, applyEdit } from './manual.js';
 import { findDuplicate } from './duplicate.js';
 import { renderCapture } from './views/capture.js';
 import { renderTrend } from './views/trend.js';
@@ -68,7 +68,8 @@ function render() {
   const demo = state.db && hasDemo(state.db.sessions);
   let body;
   if (r.name === 'detail') body = renderDetail(state, ...r.args);
-  else if (r.name === 'add' && r.args[0] === 'manual') body = renderManual(state);
+  // 수정 후 뒤로 가는 사이 다시 그릴 때도 빈 폼으로
+  else if (r.name === 'add' && r.args[0] === 'manual') body = renderManual((state.form ??= emptyForm(), state));
   else if (r.name === 'add' && r.args[0] === 'capture') body = renderCapture(state);
   else if (r.name === 'add') body = renderAddChoice();
   else if (r.name === 'settings') body = renderSettings(state);
@@ -179,6 +180,27 @@ root.addEventListener('click', async (e) => {
   if (el('[data-trend-target]')) {
     state.trend = { ...state.trend, target: el('[data-trend-target]').dataset.trendTarget };
     render();
+    return;
+  }
+  if (el('[data-growth]')) {
+    state.trend.growth = { ...state.trend.growth, [state.trend.target]: el('[data-growth]').dataset.growth };
+    render();
+    return;
+  }
+  if (el('[data-condition]')) {
+    const b = el('[data-condition]');
+    const s = state.db.sessions.find((x) => x.id === b.dataset.session);
+    if (!s) return;
+    // 같은 걸 다시 누르면 지운다
+    await store.updateSession({ ...s, condition: s.condition === b.dataset.condition ? null : b.dataset.condition });
+    await reload();
+    return;
+  }
+  if (el('[data-edit]')) {
+    const s = state.db.sessions.find((x) => x.id === el('[data-edit]').dataset.edit);
+    if (!s) return;
+    state.form = formFromSession(s);
+    go('add/manual');
     return;
   }
   if (el('[data-trend-mode]')) {
@@ -310,7 +332,9 @@ root.addEventListener('submit', async (e) => {
   const values = Object.fromEntries(new FormData(form));
   for (const el of form.querySelectorAll('[data-error]')) el.textContent = '';
 
-  const { session, errors } = buildManualSession(values, state.db.settings);
+  const editId = state.form?.editId;
+  const original = editId && state.db.sessions.find((s) => s.id === editId);
+  const { session, errors } = buildManualSession(values, state.db.settings, original ? editId : undefined);
   if (errors) {
     for (const [key, msg] of Object.entries(errors)) {
       const el = form.querySelector(`[data-error="${key}"]:not([hidden] *)`) ?? form.querySelector(`[data-error="${key}"]`);
@@ -319,7 +343,7 @@ root.addEventListener('submit', async (e) => {
     return;
   }
   // 같은 날짜·종목 기록이 있으면 한 번 경고하고, 다시 누르면 저장
-  const dup = findDuplicate(session, state.db.sessions);
+  const dup = findDuplicate(session, state.db.sessions.filter((s) => s.id !== editId));
   if (dup && !form.dataset.dupOk) {
     const box = form.querySelector('.dup');
     box.hidden = false;
@@ -329,6 +353,22 @@ root.addEventListener('submit', async (e) => {
     return;
   }
 
+  if (original) {
+    const updated = applyEdit(original, session);
+    await store.updateSession(updated);
+    state.form = null;
+    // 날짜·종목이 그대로면 상세로 돌아가고, 바뀌었으면 캘린더에서 그 날을 보여준다
+    if (updated.date === original.date && updated.sport === original.sport) goBack();
+    else {
+      state.selected = updated.date;
+      state.viewMonth = monthKey(updated.date);
+      navDepth = 0;
+      location.replace('#calendar');
+    }
+    await reload();
+    toast('수정했어요');
+    return;
+  }
   await store.addSessions([session]);
   state.selected = session.date;
   state.viewMonth = monthKey(session.date);
@@ -337,6 +377,20 @@ root.addEventListener('submit', async (e) => {
   location.replace('#calendar');
   await reload();
   toast('저장했어요');
+});
+
+// 한 줄 메모 저장
+root.addEventListener('submit', async (e) => {
+  const form = e.target.closest('#memo-form');
+  if (!form) return;
+  e.preventDefault();
+  const s = state.db.sessions.find((x) => x.id === form.dataset.session);
+  if (!s) return;
+  const memo = form.memo.value.trim();
+  if ((s.memo ?? '') === memo) return;
+  await store.updateSession({ ...s, memo: memo || null });
+  await reload();
+  toast(memo ? '메모를 저장했어요' : '메모를 지웠어요');
 });
 
 // 캡처 읽기: 한 장씩 휴대폰 안에서 OCR → 세션으로 합치기 → 확인 화면

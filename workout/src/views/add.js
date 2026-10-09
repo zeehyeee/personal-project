@@ -17,14 +17,14 @@ export function renderAddChoice() {
     </button>`;
 }
 
-const field = (name, label, unit, { sports, mode = 'decimal', hint = '' } = {}) => `
+const field = (f, name, label, unit, { sports, mode = 'decimal', hint = '' } = {}) => `
   <label class="field" data-sports="${sports.join(' ')}">
     <span class="field-label">${label}</span>
-    <span class="field-input"><input name="${name}" inputmode="${mode}" autocomplete="off" placeholder="${hint}"><em>${unit}</em></span>
+    <span class="field-input"><input name="${name}" inputmode="${mode}" autocomplete="off" placeholder="${hint}" value="${esc(f[name] ?? '')}"><em>${unit}</em></span>
     <span class="field-error" data-error="${name}"></span>
   </label>`;
 
-// form: 다시 그릴 때 입력값을 유지하기 위한 초안
+// form: 다시 그릴 때 입력값을 유지하기 위한 초안. editId 가 있으면 기록 수정
 export function renderManual(state) {
   const f = state.form;
   const chips = SPORTS.map((s) => `
@@ -34,7 +34,7 @@ export function renderManual(state) {
     </label>`).join('');
   const all = SPORTS;
   return `
-    <div class="page-head">${back}<h2>직접 입력</h2></div>
+    <div class="page-head">${back}<h2>${f.editId ? '기록 수정' : '직접 입력'}</h2></div>
     <form class="card form" id="manual-form" novalidate>
       <div class="sport-chips">${chips}</div>
       <span class="field-error" data-error="sport"></span>
@@ -51,34 +51,34 @@ export function renderManual(state) {
       <div class="field">
         <span class="field-label">운동 시간</span>
         <div class="duration">
-          <span class="field-input"><input name="h" inputmode="numeric" placeholder="0"><em>시간</em></span>
-          <span class="field-input"><input name="m" inputmode="numeric" placeholder="0"><em>분</em></span>
-          <span class="field-input"><input name="s" inputmode="numeric" placeholder="0"><em>초</em></span>
+          <span class="field-input"><input name="h" inputmode="numeric" placeholder="0" value="${esc(f.h ?? '')}"><em>시간</em></span>
+          <span class="field-input"><input name="m" inputmode="numeric" placeholder="0" value="${esc(f.m ?? '')}"><em>분</em></span>
+          <span class="field-input"><input name="s" inputmode="numeric" placeholder="0" value="${esc(f.s ?? '')}"><em>초</em></span>
         </div>
         <span class="field-error" data-error="duration"></span>
       </div>
 
-      ${field('distance', '거리', 'km', { sports: ['walk', 'run', 'bike'] })}
-      ${field('distance', '거리', 'm', { sports: ['swim'], mode: 'numeric' })}
-      ${field('kcal', '칼로리', 'kcal', { sports: all, mode: 'numeric' })}
-      ${field('pool_length_m', '수영장 길이', 'm', { sports: ['swim'], hint: `비우면 ${state.db.settings.pool_length_m}m` })}
-      ${field('swim_laps', '총 반복횟수', '회', { sports: ['swim'], mode: 'numeric', hint: '비우면 거리로 계산' })}
-      ${field('swim_total_strokes', '총 스트로크', '', { sports: ['swim'], mode: 'numeric' })}
-      ${field('avg_hr', '평균 심박수', 'bpm', { sports: all, mode: 'numeric' })}
-      ${field('avg_cadence', '평균 케이던스', 'spm', { sports: ['run'], mode: 'numeric' })}
+      ${field(f, 'distance', '거리', 'km', { sports: ['walk', 'run', 'bike'] })}
+      ${field(f, 'distance', '거리', 'm', { sports: ['swim'], mode: 'numeric' })}
+      ${field(f, 'kcal', '칼로리', 'kcal', { sports: all, mode: 'numeric' })}
+      ${field(f, 'pool_length_m', '수영장 길이', 'm', { sports: ['swim'], hint: `비우면 ${state.db.settings.pool_length_m}m` })}
+      ${field(f, 'swim_laps', '총 반복횟수', '회', { sports: ['swim'], mode: 'numeric', hint: '비우면 거리로 계산' })}
+      ${field(f, 'swim_total_strokes', '총 스트로크', '', { sports: ['swim'], mode: 'numeric' })}
+      ${field(f, 'avg_hr', '평균 심박수', 'bpm', { sports: all, mode: 'numeric' })}
+      ${field(f, 'avg_cadence', '평균 케이던스', 'spm', { sports: ['run'], mode: 'numeric' })}
 
-      <details class="field-more">
+      <details class="field-more"${['zone_max_min', 'zone_high_min', 'zone_mid_min'].some((k) => f[k]) ? ' open' : ''}>
         <summary>운동 강도 입력 <small>선택</small></summary>
         <div class="duration zones-input">
-          <span class="field-input"><input name="zone_max_min" inputmode="numeric" placeholder="0"><em>최대</em></span>
-          <span class="field-input"><input name="zone_high_min" inputmode="numeric" placeholder="0"><em>고강도</em></span>
-          <span class="field-input"><input name="zone_mid_min" inputmode="numeric" placeholder="0"><em>중강도</em></span>
+          <span class="field-input"><input name="zone_max_min" inputmode="numeric" placeholder="0" value="${esc(f.zone_max_min ?? '')}"><em>최대</em></span>
+          <span class="field-input"><input name="zone_high_min" inputmode="numeric" placeholder="0" value="${esc(f.zone_high_min ?? '')}"><em>고강도</em></span>
+          <span class="field-input"><input name="zone_mid_min" inputmode="numeric" placeholder="0" value="${esc(f.zone_mid_min ?? '')}"><em>중강도</em></span>
         </div>
         <p class="muted">삼성헬스 '정보'의 강도별 시간(분)</p>
       </details>
 
       <div class="dup" hidden></div>
-      <button class="submit" type="submit">저장</button>
+      <button class="submit" type="submit">${f.editId ? '수정 완료' : '저장'}</button>
     </form>`;
 }
 

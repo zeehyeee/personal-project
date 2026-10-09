@@ -2,7 +2,9 @@
 // 종목 칩 → 이번 달 헤드라인(큰 숫자 + 지난달 대비) → 기간 알약 + 막대 그래프 + 선택한 기간
 import { SPORTS, SPORT_META } from '../sports.js';
 import { buildSeries, changeFromPrevious, monthSummary, formatAmount, periodLabel } from '../trend.js';
-import { SPORT_ICON, dateLabelFull } from '../ui.js';
+import { SPORT_ICON, dateLabelFull, emptyState } from '../ui.js';
+import { monthGoals } from '../goals.js';
+import { GROWTH_METRICS, growthSeries } from '../growth.js';
 import { bestRecords } from '../records.js';
 import { monthKey } from '../dates.js';
 
@@ -108,6 +110,65 @@ function selection(state, series) {
     </div>`;
 }
 
+// 이번 달 목표 (바다네 곳간 월 목표 표): 운동일 + 종목별 횟수, 달성하면 뱃지
+function goalsCard(state) {
+  if (state.trend.target !== 'all') return '';
+  const g = monthGoals(state.days, state.today, state.db.settings);
+  const rows = [...(g.active ? [g.active] : []), ...g.sports];
+  if (!rows.length) return '';
+  const name = (k) => (k === 'active' ? '운동한 날' : `${SPORT_ICON[k]} ${SPORT_META[k].name}`);
+  return `
+    <section class="card">
+      <div class="trend-head"><h2>이번 달 목표</h2><span class="muted">${g.daysLeft}일 남음</span></div>
+      <ul class="goals">${rows.map((r) => `
+        <li class="${r.done ? 'done' : ''}" style="--c: var(--${r.key === 'active' ? 'primary' : r.key})">
+          <span class="goal-name">${name(r.key)}</span>
+          <span class="goal-num"><b>${r.count}</b>/${r.goal}${r.key === 'active' ? '일' : '회'}</span>
+          <span class="goal-bar"><i style="width:${(r.rate * 100).toFixed(1)}%"></i></span>
+          <span class="goal-hint">${r.done ? '<em class="badge">달성</em>' : r.hint}</span>
+        </li>`).join('')}</ul>
+    </section>`;
+}
+
+// 성장 그래프: 기록마다 점. 좋아지는 쪽이 위 (페이스·SWOLF는 낮을수록 위)
+function growthCard(state) {
+  const t = state.trend.target;
+  const metrics = GROWTH_METRICS[t];
+  if (!metrics) return '';
+  const key = metrics.some((m) => m.key === state.trend.growth?.[t]) ? state.trend.growth[t] : metrics[0].key;
+  const g = growthSeries(state.days, t, key);
+  const pills = `<div class="chips-row inner">${metrics.map((m) => `<button class="chip-btn small" aria-pressed="${m.key === key}" data-growth="${m.key}">${m.label}</button>`).join('')}</div>`;
+  let body;
+  if (g.points.length < 2) {
+    body = emptyState(g.points.length ? '기록이 하나 더 쌓이면 변화를 보여드릴게요.' : '이 지표를 계산할 기록이 아직 없어요.', { mood: 'hello' });
+  } else {
+    const W = 320, H = 150, px = 18, top = 26, bottom = 24;
+    const vals = g.points.map((p) => p.value);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi === lo) { lo -= 1; hi += 1; }
+    const x = (i) => px + (i * (W - px * 2)) / (g.points.length - 1);
+    // 좋아지는 쪽이 위
+    const norm = (v) => (g.metric.lower ? (v - lo) / (hi - lo) : (hi - v) / (hi - lo));
+    const y = (v) => top + norm(v) * (H - top - bottom);
+    const pts = g.points.map((p, i) => `${x(i)},${y(p.value)}`).join(' ');
+    const last = g.points.length - 1;
+    const bi = g.points.indexOf(g.best);
+    const md = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;
+    const label = (i, cls) => `<text x="${Math.min(W - 30, Math.max(30, x(i)))}" y="${y(g.points[i].value) - 10}" class="${cls}">${g.metric.text(g.points[i].value)}</text>`;
+    body = `
+      <svg class="growth-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${g.metric.label} 변화">
+        <polyline points="${pts}"/>
+        ${g.points.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.value)}" r="${i === last ? 5 : 3.5}" class="${i === bi ? 'best' : i === last ? 'now' : ''}"/>`).join('')}
+        ${label(last, 'v')}${bi !== last ? label(bi, 'v best') : ''}
+        <text x="${x(0)}" y="${H - 4}" class="l" text-anchor="start">${md(g.points[0].date)}</text>
+        <text x="${x(last)}" y="${H - 4}" class="l" text-anchor="end">${md(g.points[last].date)}</text>
+      </svg>
+      ${g.summary ? `<p class="growth-sum ${g.summary.better ? 'up' : g.summary.better === false ? 'down' : ''}">${g.summary.text}</p>` : ''}
+      <p class="muted center">${g.metric.lower ? '위로 갈수록 좋아요 · ' : ''}<i class="dot-best"></i> 최고 기록</p>`;
+  }
+  return `<section class="card growth" style="--c: var(--${t})"><h2>얼마나 늘었나</h2>${pills}${body}</section>`;
+}
+
 // 종목별 역대 최고 기록 (이번 달에 세운 기록은 표시)
 function recordsCard(state) {
   const t = state.trend.target;
@@ -127,5 +188,5 @@ function recordsCard(state) {
 export function renderTrend(state) {
   const series = buildSeries(state.days, state.trend.target, state.trend.mode, state.today);
   if (state.trend.index == null || state.trend.index >= series.bars.length) state.trend.index = series.bars.length - 1;
-  return chips(state) + headline(state) + chart(state, series) + recordsCard(state);
+  return chips(state) + headline(state) + goalsCard(state) + growthCard(state) + chart(state, series) + recordsCard(state);
 }

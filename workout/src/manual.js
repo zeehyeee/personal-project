@@ -56,3 +56,37 @@ export function buildManualSession(form, settings = DEFAULT_SETTINGS, id = crypt
   }
   return { session };
 }
+
+// 기록 수정: 저장된 기록 → 직접 입력 폼 초안 (거리는 수영 m, 나머지 km)
+export function formFromSession(s) {
+  const str = (v) => (v == null ? '' : String(v));
+  const d = Math.round(s.duration_sec || 0);
+  return {
+    editId: s.id,
+    sport: s.sport,
+    date: s.date,
+    start_time: s.start_time || '',
+    h: str(Math.floor(d / 3600) || ''),
+    m: str(Math.floor((d % 3600) / 60) || ''),
+    s: str(d % 60 || ''),
+    distance: s.distance_m == null ? '' : s.sport === 'swim' ? str(s.distance_m) : str(Math.round(s.distance_m) / 1000),
+    kcal: str(s.kcal),
+    avg_hr: str(s.avg_hr),
+    avg_cadence: str(s.avg_cadence),
+    pool_length_m: str(s.pool_length_m),
+    swim_laps: str(s.swim_laps),
+    swim_total_strokes: str(s.swim_total_strokes),
+    ...Object.fromEntries(ZONE_KEYS.map((k) => [k, str(s[k])])),
+  };
+}
+
+// 수정한 값을 원래 기록에 덮는다. 출처·컨디션·메모, 폼에 칸이 없는 값(저강도, 걷기 케이던스)은 원래 값 유지
+export function applyEdit(original, edited) {
+  const { source, ...fields } = edited;
+  const out = { ...original, ...fields };
+  if (edited.sport === original.sport) {
+    out.zone_low_min = original.zone_low_min ?? null;
+    if (edited.sport !== 'run') out.avg_cadence = original.avg_cadence ?? null;
+  }
+  return out;
+}
