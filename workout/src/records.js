@@ -16,11 +16,11 @@ export const RECORD_METRICS = {
   speed: { label: '최고 속도', higher: true, get: (d) => (d.sport === 'bike' && d.distance_m >= 2000 ? d.speed_kmh : null), text: (v) => `${v.toFixed(1)}km/h` },
   swimPace: { label: '최고 페이스', higher: false, get: (d) => (swimOk(d) ? d.swim.lapStats.pacePer100Sec : null), text: (v) => `${formatPace(v)}/100m` },
   swolf: { label: '최저 SWOLF', higher: false, get: (d) => (swimOk(d) ? d.swim.lapStats.avgSwolf : null), text: (v) => v.toFixed(1) },
-  continuous: { label: '최다 연속 구간', higher: true, get: (d) => d.swim?.maxContinuousLaps || null, text: (v) => `${v}구간` },
 };
 
 export const METRICS_BY_SPORT = {
-  swim: ['distance', 'duration', 'swimPace', 'swolf', 'continuous'],
+  // 수영 페이스는 성장 그래프에서 본다. 연속 구간은 휴식을 추정한 값이라 기록으로 치지 않는다
+  swim: ['distance', 'duration', 'swolf'],
   run: ['distance', 'duration', 'pace'],
   walk: ['distance', 'duration', 'pace'],
   bike: ['distance', 'duration', 'speed'],

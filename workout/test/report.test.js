@@ -42,7 +42,7 @@ test('인사이트: 처음 생긴 종목, 첫 운동 안내', () => {
   assert.ok(empty.insights[0].text.includes('첫 운동'));
 });
 
-test('인사이트: 스트로크 감소, 새 영법, 쉬지 않고 이어 수영, 쉬지 않고 달리기', () => {
+test('인사이트: 스트로크 감소, 새 영법, 쉬지 않고 달리기', () => {
   // 지난주 수영(자유형만, 구간당 7스트로크, 연속 3구간) → 이번 주 10/6 실제 기록
   const s = [
     ...demo.sessions,
@@ -54,7 +54,7 @@ test('인사이트: 스트로크 감소, 새 영법, 쉬지 않고 이어 수영
   const text = weeklyReport(d, '2026-10-04', today).insights.map((i) => i.text).join('\n');
   assert.match(text, /배영을 새로 시작했어요/);
   assert.match(text, /자유형 구간당 스트로크가 7\.0 → 5\.5로 줄었어요/);
-  assert.match(text, /처음으로 8구간을 쉬지 않고 수영했어요/);
+  assert.doesNotMatch(text, /구간을 쉬지 않고/); // 휴식 추정값이라 인사이트로 쓰지 않는다
   const runText = weeklyReport(d, '2026-09-27', today).insights.map((i) => i.text).join('\n');
   assert.match(runText, /한 번에 19분 동안 쉬지 않고 달렸어요/);
 });

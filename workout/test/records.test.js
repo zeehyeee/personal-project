@@ -25,9 +25,9 @@ test('달리기 10/2: 최장 거리·최장 시간 신기록, 페이스는 이�
   assert.equal(r[0].previous, '2.00km');
 });
 
-test('수영 10/6: 거리, 시간, 페이스(3\'20" < 4\'00"), SWOLF(55.7 < 67) 신기록, 연속 구간은 8 = 8 이라 아님', () => {
+test('수영 10/6: 최장 거리·최장 시간·최저 SWOLF(55.7 < 67) 신기록', () => {
   const r = recordsOn(days, 'swim', '2026-10-06');
-  assert.deepEqual(r.map((x) => x.key), ['distance', 'duration', 'swimPace', 'swolf']);
+  assert.deepEqual(r.map((x) => x.key), ['distance', 'duration', 'swolf']);
 });
 
 test('역대 최고 기록', () => {

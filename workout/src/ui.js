@@ -39,7 +39,7 @@ export const dec1 = (v) => fmt(v, (x) => x.toFixed(1));
 
 // 빈 화면: 쉬는 고양이 + 한 줄 + (선택) 버튼
 export function emptyState(text, { action = '', label = '', mood = 'rest' } = {}) {
-  return `<div class="empty">${cat({ size: 64, mood })}<p>${text}</p>${action ? `<button class="empty-btn" ${action}>${label}</button>` : ''}</div>`;
+  return `<div class="empty">${cat({ size: 96, mood })}<p>${text}</p>${action ? `<button class="empty-btn" ${action}>${label}</button>` : ''}</div>`;
 }
 
 // 컨디션 (운동마다 하나)

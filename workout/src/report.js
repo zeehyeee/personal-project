@@ -135,9 +135,6 @@ function insights(days, start, today, cur, base) {
     };
     const pNow = pace(wSwim), pPrev = pace(rSwim);
     if (pNow != null && pPrev != null && pPrev - pNow >= 3) push('⏱️', `수영 페이스가 ${formatPace(pPrev)} → ${formatPace(pNow)}/100m로 빨라졌어요.`, 'good', 2);
-    const contNow = Math.max(...wSwim.map((x) => x.swim.maxContinuousLaps ?? 0));
-    const contBest = Math.max(0, ...swimLaps(before).map((x) => x.swim.maxContinuousLaps ?? 0));
-    if (before.some((d) => days[d].swim) && contNow > contBest) push('🏊', `처음으로 ${contNow}구간을 쉬지 않고 수영했어요.`, 'good', 3);
   }
 
   // 달리기: 한 번에 쉬지 않고 달린 시간

@@ -11,42 +11,35 @@ import { DEFAULT_SETTINGS } from '../src/sports.js';
 const s = (date, sport, min, extra = {}) => ({ id: `${date}${sport}`, date, sport, duration_sec: min * 60, distance_m: null, ...extra });
 const daysOf = (list) => groupByDay(list);
 
-test('오늘 카드: 기록이 하나도 없으면 첫 운동 안내', () => {
+test('첫 화면: 기록이 하나도 없으면 첫 운동 안내', () => {
   const c = todayCoach({}, '2026-10-08');
-  assert.equal(c.mood, 'hello');
-  assert.equal(c.week.days, 0);
+  assert.match(c.text, /첫 운동/);
+  assert.equal(c.weekDays, 0);
+  assert.equal(c.week.length, 7);
 });
 
-test('오늘 카드: 오늘 운동했으면 완료 + 이번 주 진행', () => {
+test('첫 화면: 오늘 운동했으면 완료, 이번 주는 7일 중 며칠', () => {
   const c = todayCoach(daysOf([s('2026-10-05', 'walk', 30), s('2026-10-06', 'walk', 30)]), '2026-10-06');
-  assert.equal(c.mood, 'happy');
-  assert.match(c.text, /오늘 걷기 끝! 이번 주 2\/5일/);
-  assert.deepEqual(c.week, { days: 2, daysGoal: 5, minutes: 60, minutesGoal: 150 });
+  assert.equal(c.text, '오늘 걷기 완료! 잘했어요.');
+  assert.equal(c.weekDays, 2);
+  assert.equal(c.streak, 2);
+  assert.deepEqual(c.week.map((d) => d.done), [false, true, true, false, false, false, false]);
 });
 
-test('오늘 카드: 어제까지 연속이면 연속 기록 지키기', () => {
+test('첫 화면: 어제까지 연속이면 오늘 하면 며칠 연속인지', () => {
   const c = todayCoach(daysOf([s('2026-10-05', 'walk', 30), s('2026-10-06', 'run', 20)]), '2026-10-07');
-  assert.match(c.text, /2일 연속 중.*3일로 이어져요/);
+  assert.equal(c.text, '오늘도 운동하면 3일 연속이에요.');
   assert.equal(c.streak, 2);
 });
 
-test('오늘 카드: 남은 날을 매일 해야 주 목표면 알려준다', () => {
-  // 10/8(목) 기준 남은 날 목~토 3일, 이번 주 2일 → 목표 5일까지 3일
-  const c = todayCoach(daysOf([s('2026-10-04', 'walk', 30), s('2026-10-06', 'walk', 30)]), '2026-10-08');
-  assert.match(c.text, /목표까지 3일 남았어요/);
+test('첫 화면: 수영 5일 이상 쉬었으면 수영 권유', () => {
+  const c = todayCoach(daysOf([s('2026-10-01', 'swim', 40)]), '2026-10-06');
+  assert.equal(c.text, '수영한 지 5일 됐어요. 오늘 수영 어때요?');
 });
 
-test('오늘 카드: 수영 5일 이상 쉬었으면 수영 권유', () => {
-  const c = todayCoach(daysOf([s('2026-10-01', 'swim', 40)]), '2026-10-06', { ...DEFAULT_SETTINGS, weekly_active_days_goal: 3 });
-  assert.equal(c.mood, 'swim');
-  assert.match(c.text, /수영 5일 쉬었어요/);
-});
-
-test('오늘 카드: 주 시간 목표까지 남은 분을 남은 날로 나눈다', () => {
-  // 10/9(금): 남은 날 금·토 2일, 이번 주 60분 → 90분 남음, 하루 45분
-  const days = daysOf([s('2026-10-05', 'walk', 30), s('2026-10-06', 'walk', 30), s('2026-10-04', 'walk', 0.5)]);
-  const c = todayCoach(days, '2026-10-09', { ...DEFAULT_SETTINGS, weekly_active_days_goal: 3 });
-  assert.match(c.text, /오늘 45분이면/);
+test('첫 화면: 며칠 쉬었는지', () => {
+  const c = todayCoach(daysOf([s('2026-10-02', 'run', 20)]), '2026-10-06');
+  assert.equal(c.text, '3일 쉬었어요. 오늘 가볍게 걸어볼까요?');
 });
 
 test('이번 달 목표: 종목별 횟수·달성·남은 페이스', () => {

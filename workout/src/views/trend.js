@@ -2,7 +2,7 @@
 // 종목 칩 → 이번 달 헤드라인(큰 숫자 + 지난달 대비) → 기간 알약 + 막대 그래프 + 선택한 기간
 import { SPORTS, SPORT_META } from '../sports.js';
 import { buildSeries, changeFromPrevious, monthSummary, formatAmount, periodLabel } from '../trend.js';
-import { SPORT_ICON, dateLabelFull, emptyState } from '../ui.js';
+import { SPORT_ICON, dateLabelFull } from '../ui.js';
 import { monthGoals } from '../goals.js';
 import { GROWTH_METRICS, growthSeries } from '../growth.js';
 import { bestRecords } from '../records.js';
@@ -110,23 +110,34 @@ function selection(state, series) {
     </div>`;
 }
 
-// 이번 달 목표 (바다네 곳간 월 목표 표): 운동일 + 종목별 횟수, 달성하면 뱃지
-function goalsCard(state) {
+// 이번 달 목표 배지 (애플 피트니스 월간 챌린지처럼): 달성 전엔 회색 테두리에 진행 고리, 달성하면 색이 찬 배지
+function goalBadges(state) {
   if (state.trend.target !== 'all') return '';
   const g = monthGoals(state.days, state.today, state.db.settings);
   const rows = [...(g.active ? [g.active] : []), ...g.sports];
   if (!rows.length) return '';
-  const name = (k) => (k === 'active' ? '운동한 날' : `${SPORT_ICON[k]} ${SPORT_META[k].name}`);
+  const C = 2 * Math.PI * 24;
+  const badge = (r) => {
+    const icon = r.key === 'active' ? '💪' : SPORT_ICON[r.key];
+    const name = r.key === 'active' ? '운동일' : SPORT_META[r.key].name;
+    return `
+      <li class="gbadge ${r.done ? 'done' : r.count ? 'partial' : ''}" style="--c: var(--${r.key === 'active' ? 'primary' : r.key})">
+        <span class="gring">
+          <svg viewBox="0 0 56 56" aria-hidden="true">
+            <circle cx="28" cy="28" r="24" class="track"/>
+            <circle cx="28" cy="28" r="24" class="arc" stroke-dasharray="${(C * r.rate).toFixed(1)} ${C.toFixed(1)}"/>
+          </svg>
+          <span class="gicon">${icon}</span>
+        </span>
+        <b>${name}</b>
+        <small>${r.done ? '달성' : `${r.count}/${r.goal}${r.key === 'active' ? '일' : '회'}`}</small>
+      </li>`;
+  };
+  const done = rows.filter((r) => r.done).length;
   return `
     <section class="card">
-      <div class="trend-head"><h2>이번 달 목표</h2><span class="muted">${g.daysLeft}일 남음</span></div>
-      <ul class="goals">${rows.map((r) => `
-        <li class="${r.done ? 'done' : ''}" style="--c: var(--${r.key === 'active' ? 'primary' : r.key})">
-          <span class="goal-name">${name(r.key)}</span>
-          <span class="goal-num"><b>${r.count}</b>/${r.goal}${r.key === 'active' ? '일' : '회'}</span>
-          <span class="goal-bar"><i style="width:${(r.rate * 100).toFixed(1)}%"></i></span>
-          <span class="goal-hint">${r.done ? '<em class="badge">달성</em>' : r.hint}</span>
-        </li>`).join('')}</ul>
+      <div class="trend-head"><h2>이번 달 목표</h2><span class="muted">${done}/${rows.length}개 달성 · ${g.daysLeft}일 남음</span></div>
+      <ul class="gbadges">${rows.map(badge).join('')}</ul>
     </section>`;
 }
 
@@ -140,7 +151,8 @@ function growthCard(state) {
   const pills = `<div class="chips-row inner">${metrics.map((m) => `<button class="chip-btn small" aria-pressed="${m.key === key}" data-growth="${m.key}">${m.label}</button>`).join('')}</div>`;
   let body;
   if (g.points.length < 2) {
-    body = emptyState(g.points.length ? '기록이 하나 더 쌓이면 변화를 보여드릴게요.' : '이 지표를 계산할 기록이 아직 없어요.', { mood: 'hello' });
+    // 고양이는 첫 화면에만: 여기는 글로만
+    body = `<p class="muted growth-empty">${g.points.length ? '기록이 하나 더 쌓이면 변화를 보여드릴게요.' : '이 지표를 계산할 기록이 아직 없어요.'}</p>`;
   } else {
     const W = 320, H = 150, px = 18, top = 26, bottom = 24;
     const vals = g.points.map((p) => p.value);
@@ -188,5 +200,6 @@ function recordsCard(state) {
 export function renderTrend(state) {
   const series = buildSeries(state.days, state.trend.target, state.trend.mode, state.today);
   if (state.trend.index == null || state.trend.index >= series.bars.length) state.trend.index = series.bars.length - 1;
-  return chips(state) + headline(state) + goalsCard(state) + growthCard(state) + chart(state, series) + recordsCard(state);
+  // 순서: 큰 숫자 → 기간 그래프 → (전체) 목표 배지 / (종목) 얼마나 늘었나 → 최고 기록
+  return chips(state) + headline(state) + chart(state, series) + goalBadges(state) + growthCard(state) + recordsCard(state);
 }
