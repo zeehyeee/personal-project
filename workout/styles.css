@@ -566,3 +566,15 @@ input, select, textarea { font-size: max(16px, 1em); }
 .report-card.pace { background: var(--surface); }
 .report-card.pace b.up { color: var(--green-600); }
 .pace-tip { display: block; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-style: normal; font-size: var(--t7); color: var(--grey-800); line-height: 1.45; }
+
+/* 상세: 보는 화면에서 바로 고치는 숫자 */
+.inl {
+  font: inherit; color: inherit; font-variant-numeric: tabular-nums; padding: 0; margin: 0; border: 0; border-radius: 4px;
+  background: transparent; text-decoration: underline dotted var(--grey-300); text-underline-offset: 4px; min-width: 2ch;
+}
+.m-value .inl { font-size: 16px; font-size: max(16px, 1em); font-weight: 700; }
+.sub .inl { font-size: 16px; text-align: right; color: var(--grey-600); }
+.inl:focus { outline: 0; background: color-mix(in srgb, var(--primary) 10%, white); text-decoration: none; }
+.inl-hint { margin-top: 8px; }
+.lap-edit-card { padding-top: 16px; padding-bottom: 16px; }
+.lap-edit-card .set-btn, .card > .set-btn { margin-top: 12px; }

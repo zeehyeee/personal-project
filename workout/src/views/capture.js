@@ -1,6 +1,6 @@
 // 캡처로 추가: 고르기 → 읽는 중 → 확인
-import { SPORT_META, STROKE_NAMES } from '../sports.js';
-import { findMissingLaps } from '../swim.js';
+import { SPORT_META } from '../sports.js';
+import { lapRows, lapEditRows, isBadLap } from './lap-editor.js';
 import { formatDuration } from '../format.js';
 import { ICONS, SPORT_ICON, esc, dateLabelFull } from '../ui.js';
 
@@ -20,6 +20,7 @@ export function renderCapture(state) {
       </section>`;
   }
   if (c.phase === 'confirm') return head + renderConfirm(state);
+  if (c.phase === 'laps') return head + renderLapAttach(state);
   return `${head}
     ${c.error ? `<div class="dup">${esc(c.error)}</div>` : ''}
     <section class="card pick">
@@ -104,29 +105,31 @@ function card(s, i) {
 }
 
 // 구간 고치기: 빈 값·빠진 구간이 있으면 펼쳐서 그 줄만 먼저 보여준다 (전체는 '모든 구간 보기')
-const mmss = (t) => (t == null ? '' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`);
 function lapEditor(s, i) {
   if (s.session.sport !== 'swim' || !s.laps.length) return '';
-  const expected = s.session.swim_laps ?? s.laps[s.laps.length - 1].lap_no;
-  const missingNos = findMissingLaps(s.laps.map((l) => l.lap_no), expected).flatMap(([a, b]) => Array.from({ length: b - a + 1 }, (_, k) => a + k));
-  const rows = [...s.laps, ...missingNos.map((n) => ({ lap_no: n, stroke: 'freestyle', time_sec: null, strokes: null, added: true }))]
-    .sort((a, b) => a.lap_no - b.lap_no);
-  const bad = (l) => l.added || l.time_sec == null || l.strokes == null;
-  const nBad = rows.filter(bad).length;
-  const options = (cur) => Object.entries(STROKE_NAMES).map(([k, n]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${n}</option>`).join('');
-  const row = (l, k) => `
-    <li class="lap-edit ${bad(l) ? 'bad' : 'ok'}">
-      <input type="hidden" name="${i}.lap.${k}.no" value="${l.lap_no}">
-      <span class="le-no">${l.lap_no}</span>
-      <select name="${i}.lap.${k}.stroke">${options(l.stroke)}</select>
-      <span class="field-input le-in"><input name="${i}.lap.${k}.time" value="${mmss(l.time_sec)}" inputmode="numeric" placeholder="0:00"><em>분:초</em></span>
-      <span class="field-input le-in"><input name="${i}.lap.${k}.strokes" value="${l.strokes ?? ''}" inputmode="numeric" placeholder="-"><em>회</em></span>
-    </li>`;
+  const rows = lapRows(s.laps, s.session.swim_laps);
+  const nBad = rows.filter(isBadLap).length;
   return `
     <details class="lap-details" ${nBad ? 'open' : ''}>
       <summary>구간 고치기${nBad ? ` <em class="le-count">${nBad}개 확인 필요</em>` : ''}</summary>
-      <ul class="lap-edits ${nBad ? 'only-bad' : ''}">${rows.map(row).join('')}</ul>
+      <ul class="lap-edits ${nBad ? 'only-bad' : ''}">${lapEditRows(rows, i)}</ul>
       ${nBad ? '<button type="button" class="text-link le-all" data-action="lap-show-all">모든 구간 보기 ›</button>' : ''}
       <span class="field-error" data-error="${i}.laps"></span>
     </details>`;
+}
+
+// 이미 저장한 수영에 구간 캡처만 채우기: 읽은 구간을 확인하고 저장
+function renderLapAttach(state) {
+  const { session: x, laps } = state.capture;
+  const rows = lapRows(laps, x.swim_laps);
+  const nBad = rows.filter(isBadLap).length;
+  return `
+    <form class="card lap-form" data-lap-session="${esc(x.id)}" novalidate>
+      <div class="cap-head"><span class="tile-icon">${SPORT_ICON.swim}</span><span><b>수영</b> · ${dateLabelFull(x.date)}${x.start_time ? ` ${esc(x.start_time)}` : ''}</span></div>
+      <p class="muted" style="margin-top:8px">구간 ${laps.length}개를 읽었어요${x.swim_laps ? ` (총 ${x.swim_laps}구간)` : ''}.${nBad ? ` 빈 칸 ${nBad}줄을 채우거나 그대로 저장하세요.` : ''}</p>
+      <ul class="lap-edits">${lapEditRows(rows, 'L')}</ul>
+      <span class="field-error" data-error="L.laps"></span>
+      <button class="submit" type="submit" style="margin-top:14px">구간 저장</button>
+    </form>
+    <button class="text-btn" type="button" data-action="back">취소</button>`;
 }

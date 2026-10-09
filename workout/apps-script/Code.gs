@@ -39,6 +39,7 @@ function doPost(e) {
   try {
     if (body.action === 'addSessions') addSessions_(body.sessions || [], body.laps || []);
     else if (body.action === 'updateSession') updateSession_(body.session || {});
+    else if (body.action === 'setLaps') setLaps_(body.session_id, body.laps || []);
     else if (body.action === 'deleteSessions') deleteSessions_(body.ids || []);
     else if (body.action === 'saveSettings') saveSettings_(body.patch || {});
     else if (body.action === 'replaceAll') replaceAll_(body.sessions || [], body.laps || [], body.settings || {});
@@ -134,6 +135,13 @@ function deleteWhere_(name, col, ids) {
   const drop = {};
   ids.forEach((id) => { drop[id] = true; });
   for (let i = vals.length - 1; i >= 0; i--) if (drop[vals[i][0]]) sh.deleteRow(i + 2);
+}
+
+// 한 세션의 구간 기록을 통째로 바꾼다
+function setLaps_(sessionId, laps) {
+  if (!sessionId) return;
+  deleteWhere_('swim_laps', 'session_id', [sessionId]);
+  append_('swim_laps', laps.filter((l) => l.session_id === sessionId));
 }
 
 function deleteSessions_(ids) {

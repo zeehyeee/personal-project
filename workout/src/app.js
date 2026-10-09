@@ -15,7 +15,7 @@ import { renderCapture } from './views/capture.js';
 import { renderTrend } from './views/trend.js';
 import { renderSettings, parseSetting } from './views/settings.js';
 import { extractImage } from './capture/extract.js';
-import { mergeCaptures } from './capture/merge.js';
+import { mergeCaptures, mergeLapItems } from './capture/merge.js';
 import { createBrowserEngine, fileToGray } from './capture/engine-browser.js';
 
 // 구글 시트를 연결했으면 시트 동기화, 아니면 휴대폰 저장소만
@@ -326,6 +326,15 @@ root.addEventListener('change', (e) => {
     });
     return;
   }
+  // 상세 화면에서 바로 고친 숫자
+  if (e.target.matches('.inl')) {
+    saveInline(e.target);
+    return;
+  }
+  if (e.target.matches('.lap-capture-input') && e.target.files.length) {
+    readCaptures([...e.target.files], e.target.dataset.session);
+    return;
+  }
   if (e.target.id === 'capture-input' && e.target.files.length) {
     readCaptures([...e.target.files]);
     return;
@@ -337,6 +346,23 @@ root.addEventListener('change', (e) => {
     resetDuplicate(form);
   }
 });
+
+async function saveInline(input) {
+  const s = state.db.sessions.find((x) => x.id === input.dataset.session);
+  if (!s) return;
+  const raw = input.value.trim().replace(/,/g, '');
+  const n = raw === '' ? null : Number(raw);
+  if (n != null && !(Number.isFinite(n) && n >= 0)) {
+    toast('숫자를 확인해주세요');
+    render();
+    return;
+  }
+  const v = n == null ? null : Math.round(n * Number(input.dataset.scale || 1));
+  if (v === (s[input.dataset.inline] ?? null)) return;
+  await store.updateSession({ ...s, [input.dataset.inline]: v });
+  await reload();
+  toast('수정했어요');
+}
 
 function resetDuplicate(form) {
   form.querySelector('.dup').hidden = true;
@@ -398,6 +424,24 @@ root.addEventListener('submit', async (e) => {
   toast('저장했어요');
 });
 
+// 구간 저장 (상세의 채우기·고치기, 구간 캡처 확인)
+root.addEventListener('submit', async (e) => {
+  const form = e.target.closest('.lap-form');
+  if (!form) return;
+  e.preventDefault();
+  const id = form.dataset.lapSession;
+  const { laps, errors } = lapsFromForm(Object.fromEntries(new FormData(form)), 'L', id);
+  const err = form.querySelector('[data-error="L.laps"]');
+  if (errors.length) {
+    err.textContent = errors[0];
+    return;
+  }
+  await store.setLaps(id, laps);
+  if (route().name === 'add') goBack();
+  await reload();
+  toast(`구간 ${laps.length}개를 저장했어요`);
+});
+
 // 한 줄 메모 저장
 root.addEventListener('submit', async (e) => {
   const form = e.target.closest('#memo-form');
@@ -413,8 +457,9 @@ root.addEventListener('submit', async (e) => {
 });
 
 // 캡처 읽기: 한 장씩 휴대폰 안에서 OCR → 세션으로 합치기 → 확인 화면
-async function readCaptures(files) {
+async function readCaptures(files, attachTo = null) {
   const c = (state.capture = { phase: 'reading', total: files.length, done: 0, status: '' });
+  if (attachTo && route().name !== 'add') go('add/capture');
   render();
   try {
     const engine = await createBrowserEngine((msg) => { c.status = msg; render(); });
@@ -428,6 +473,15 @@ async function readCaptures(files) {
       items.push(...found);
       c.done++;
       render();
+    }
+    if (attachTo) {
+      const laps = mergeLapItems(items);
+      const session = state.db.sessions.find((x) => x.id === attachTo);
+      state.capture = laps.length && session
+        ? { phase: 'laps', session, laps }
+        : { phase: 'pick', error: '구간 화면을 찾지 못했어요. 삼성헬스 수영의 구간(시간·스트로크) 화면을 골라주세요.' };
+      render();
+      return;
     }
     const result = mergeCaptures(items, { today });
     for (const s of result.sessions) s.duplicate = findDuplicate(s.session, state.db.sessions);

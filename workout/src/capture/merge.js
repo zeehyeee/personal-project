@@ -82,18 +82,8 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
     if (fits[0]) Object.entries(zones).forEach(([k, v]) => { if (fits[0].fields[k] == null) fits[0].fields[k] = v; });
   }
 
-  // 4) 수영 구간: 같은 구간 번호는 합친다 (시간 화면 + 스트로크 화면, 겹치는 스크롤)
-  const lapMap = new Map();
-  for (const it of items.filter((i) => i.kind === 'laps')) {
-    for (const r of it.rows) {
-      const lap = lapMap.get(r.lap_no) ?? { lap_no: r.lap_no, stroke: r.stroke, time_sec: null, strokes: null };
-      if (it.metric === 'time' && lap.time_sec == null) lap.time_sec = r.value;
-      if (it.metric === 'strokes' && lap.strokes == null) lap.strokes = r.value;
-      lap.stroke ??= r.stroke;
-      lapMap.set(r.lap_no, lap);
-    }
-  }
-  const laps = [...lapMap.values()].sort((a, b) => a.lap_no - b.lap_no);
+  // 4) 수영 구간
+  const laps = mergeLapItems(items);
   const swims = groups.filter((g) => g.sport === 'swim');
   let lapOwner = null;
   if (laps.length) {
@@ -148,6 +138,21 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
 
   sessions.sort((a, b) => (a.session.date + a.session.start_time).localeCompare(b.session.date + b.session.start_time));
   return { sessions, notes };
+}
+
+// 수영 구간: 같은 구간 번호는 합친다 (시간 화면 + 스트로크 화면, 겹치는 스크롤)
+export function mergeLapItems(items) {
+  const lapMap = new Map();
+  for (const it of items.filter((i) => i.kind === 'laps')) {
+    for (const r of it.rows) {
+      const lap = lapMap.get(r.lap_no) ?? { lap_no: r.lap_no, stroke: r.stroke, time_sec: null, strokes: null };
+      if (it.metric === 'time' && lap.time_sec == null) lap.time_sec = r.value;
+      if (it.metric === 'strokes' && lap.strokes == null) lap.strokes = r.value;
+      lap.stroke ??= r.stroke;
+      lapMap.set(r.lap_no, lap);
+    }
+  }
+  return [...lapMap.values()].sort((a, b) => a.lap_no - b.lap_no);
 }
 
 const zoneFields = (f) => Object.fromEntries(ZONE_KEYS.map((k) => [k, f[k] ?? null]));

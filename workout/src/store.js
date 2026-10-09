@@ -61,6 +61,12 @@ export function createLocalStore(storage = globalThis.localStorage) {
       db.sessions[i] = session;
       write(db);
     },
+    // 한 수영 세션의 구간 기록을 통째로 바꾼다 (나중에 채우기·고치기)
+    async setLaps(sessionId, laps) {
+      const db = current();
+      db.laps = [...db.laps.filter((l) => l.session_id !== sessionId), ...laps];
+      write(db);
+    },
     async deleteSessions(ids) {
       const drop = new Set(ids);
       const db = current();

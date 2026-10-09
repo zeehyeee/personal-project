@@ -125,3 +125,17 @@ test('기본 시트: 처음 여는 기기는 자동 연결 설정, 연결 끊기
   writeSheetConfig({ url: 'https://x/exec' }, storage);
   assert.equal(readSheetConfig(storage).url, 'https://x/exec');
 });
+
+test('구간 나중에 채우기·고치기: 그 세션 구간만 통째로 바뀌고 시트에도', async () => {
+  const api = fakeAppsScript();
+  const storage = memoryStorage();
+  const store = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, api.fetchImpl), storage);
+  await store.load();
+  const swim = { id: 'sw', date: '2026-10-04', sport: 'swim', duration_sec: 5146, distance_m: 775, swim_laps: 2, source: 'capture' };
+  await store.addSessions([swim, { ...swim, id: 'other' }], [{ session_id: 'other', lap_no: 1, stroke: 'freestyle', time_sec: 50, strokes: 5 }]);
+  await store.setLaps('sw', [{ session_id: 'sw', lap_no: 1, stroke: 'freestyle', time_sec: 60, strokes: 6 }]);
+  await store.setLaps('sw', [{ session_id: 'sw', lap_no: 1, stroke: 'backstroke', time_sec: 61, strokes: 9 }, { session_id: 'sw', lap_no: 2, stroke: 'freestyle', time_sec: 55, strokes: 6 }]);
+  const db = await store.load();
+  assert.deepEqual(db.laps.filter((l) => l.session_id === 'sw').map((l) => [l.lap_no, l.stroke, l.time_sec]), [[1, 'backstroke', 61], [2, 'freestyle', 55]]);
+  assert.equal(db.laps.filter((l) => l.session_id === 'other').length, 1);
+});

@@ -3,51 +3,60 @@
 import { SPORT_META, STROKE_NAMES, ZONE_KEYS, ZONE_META } from '../sports.js';
 import { formatDuration, formatPace } from '../format.js';
 import { flagRestLaps } from '../swim.js';
+import { lapRows, lapEditRows } from './lap-editor.js';
 import { recordsOn } from '../records.js';
 import { esc, ICONS, SPORT_ICON, CONDITIONS, dateLabelFull, km, int, dec1, emptyState } from '../ui.js';
 
-const metric = (label, value, unit = '') =>
-  `<div class="m"><span class="m-value">${value}${value !== '-' && unit ? `<small>${unit}</small>` : ''}</span><span class="m-label">${label}</span></div>`;
-const sub = (label, value) => `<li><span>${label}</span><span>${value}</span></li>`;
+const metric = (label, value, unit = '', input = '') =>
+  `<div class="m"><span class="m-value">${input || value}${(input || value !== '-') && unit ? `<small>${unit}</small>` : ''}</span><span class="m-label">${label}</span></div>`;
+const sub = (label, value, input = '') => `<li><span>${label}</span><span>${input ? `${input}${value}` : value}</span></li>`;
 
-function levels(day) {
+// 보는 화면에서 바로 고치는 숫자 칸 (그날 기록이 1건일 때만. 여러 건을 합친 값은 어느 기록을 고칠지 모호해서)
+// scale: 화면 단위 → 저장 단위 (km → m 는 1000)
+const inl = (id, field, raw, { scale = 1, decimals = 0 } = {}) => {
+  if (!id) return '';
+  const v = raw == null ? '' : decimals ? (raw / scale).toFixed(decimals) : String(Math.round(raw / scale));
+  return `<input class="inl" data-inline="${field}" data-session="${esc(id)}" data-scale="${scale}" inputmode="decimal" value="${v}" placeholder="-" style="width:${Math.max(2, v.length) + 0.6}ch" aria-label="${field}">`;
+};
+
+function levels(day, id) {
   const pace = (v) => (v == null ? '-' : formatPace(v));
   switch (day.sport) {
     case 'swim': {
       const ls = day.swim.lapStats;
       return {
         second: [
-          metric('거리', int(day.distance_m), 'm'),
-          metric('칼로리', int(day.kcal), 'kcal'),
-          metric('총 반복횟수', int(day.swim.laps), '회'),
+          metric('거리', int(day.distance_m), 'm', inl(id, 'distance_m', day.distance_m || null)),
+          metric('칼로리', int(day.kcal), 'kcal', inl(id, 'kcal', day.kcal || null)),
+          metric('총 반복횟수', int(day.swim.laps), '회', inl(id, 'swim_laps', day.swim.laps || null)),
         ],
         third: [
           sub('수영 페이스 (구간 기준)', ls ? `${pace(ls.pacePer100Sec)} /100m` : '-'),
           sub('평균 SWOLF (휴식 제외)', ls ? dec1(ls.avgSwolf) : '-'),
-          sub('평균 심박수', day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`),
-          sub('수영장 길이', day.swim.pools.map((p) => `${p}m`).join(' · ')),
+          sub('평균 심박수', id ? ' bpm' : day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`, inl(id, 'avg_hr', day.avg_hr)),
+          sub('수영장 길이', id ? 'm' : day.swim.pools.map((p) => `${p}m`).join(' · '), inl(id, 'pool_length_m', day.swim.pools[0])),
         ],
       };
     }
     case 'bike':
       return {
         second: [
-          metric('거리', km(day.distance_m), 'km'),
-          metric('칼로리', int(day.kcal), 'kcal'),
+          metric('거리', km(day.distance_m), 'km', inl(id, 'distance_m', day.distance_m || null, { scale: 1000, decimals: 2 })),
+          metric('칼로리', int(day.kcal), 'kcal', inl(id, 'kcal', day.kcal || null)),
           metric('평균 속도', dec1(day.speed_kmh), 'km/h'),
         ],
-        third: [sub('평균 심박수', day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`)],
+        third: [sub('평균 심박수', id ? ' bpm' : day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`, inl(id, 'avg_hr', day.avg_hr))],
       };
     default: // run, walk
       return {
         second: [
-          metric('거리', km(day.distance_m), 'km'),
-          metric('칼로리', int(day.kcal), 'kcal'),
+          metric('거리', km(day.distance_m), 'km', inl(id, 'distance_m', day.distance_m || null, { scale: 1000, decimals: 2 })),
+          metric('칼로리', int(day.kcal), 'kcal', inl(id, 'kcal', day.kcal || null)),
           metric('평균 페이스', pace(day.pace_sec_per_km), '/km'),
         ],
         third: [
-          sub('평균 심박수', day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`),
-          ...(day.sport === 'run' ? [sub('평균 케이던스', day.avg_cadence == null ? '-' : `${int(day.avg_cadence)} spm`)] : []),
+          sub('평균 심박수', id ? ' bpm' : day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`, inl(id, 'avg_hr', day.avg_hr)),
+          ...(day.sport === 'run' ? [sub('평균 케이던스', id ? ' spm' : day.avg_cadence == null ? '-' : `${int(day.avg_cadence)} spm`, inl(id, 'avg_cadence', day.avg_cadence))] : []),
         ],
       };
   }
@@ -89,7 +98,8 @@ export function renderDetail(state, date, sport) {
   if (!day) {
     return `<div class="detail">${back}<section class="card">${emptyState('기록을 찾을 수 없어요.')}</section></div>`;
   }
-  const { second, third } = levels(day);
+  const editId = day.sessionCount === 1 ? day.sessionIds[0] : null;
+  const { second, third } = levels(day, editId);
   const prs = recordsOn(state.days, sport, date);
   const badges = prs.length
     ? `<div class="pr-badges">${prs.map((r) => `<span class="pr-badge" title="이전 최고 ${esc(r.previous)}">🏅 ${r.label} 신기록 · ${esc(r.text)}</span>`).join('')}</div>`
@@ -113,6 +123,7 @@ export function renderDetail(state, date, sport) {
         <div class="secondary">${second.join('')}</div>
         <ul class="sub">${third.join('')}</ul>
         ${lapNote(day)}
+        ${editId ? '<p class="note inl-hint">숫자를 눌러 바로 고칠 수 있어요</p>' : ''}
       </section>
       ${noteSection(state, day)}
       ${zoneSection(day)}
@@ -152,8 +163,42 @@ function lapSection(state, day) {
   const groups = sessions.map((s) => ({
     s,
     laps: flagRestLaps(state.db.laps.filter((l) => l.session_id === s.id).sort((a, b) => a.lap_no - b.lap_no), mult),
-  })).filter((g) => g.laps.length);
-  if (!groups.length) return '';
+  }));
+  const editors = groups.map((g) => lapEditCard(g.s, g.laps, groups.length > 1)).join('');
+  const withLaps = groups.filter((g) => g.laps.length);
+  if (!withLaps.length) return editors;
+  return lapView(state, withLaps) + editors;
+}
+
+// 구간 채우기·고치기: 구간이 없으면 캡처로 채우거나 직접 입력, 있으면 접어 둔 고치기
+function lapEditCard(s, laps, many) {
+  const rows = lapRows(laps, s.swim_laps);
+  if (!rows.length) return '';
+  const empty = !laps.length;
+  const form = `
+    <form class="lap-form" data-lap-session="${esc(s.id)}" novalidate>
+      <ul class="lap-edits">${lapEditRows(rows, 'L')}</ul>
+      <span class="field-error" data-error="L.laps"></span>
+      <button class="submit" type="submit" style="margin-top:12px; width:100%">구간 저장</button>
+    </form>`;
+  const pick = `<label class="set-btn">구간 캡처로 채우기<input type="file" class="lap-capture-input" data-session="${esc(s.id)}" accept="image/*" multiple hidden></label>`;
+  const when = many && s.start_time ? ` · ${esc(s.start_time)} 세션` : '';
+  if (empty) {
+    return `
+    <section class="card">
+      <h2>구간 기록${when}</h2>
+      <p class="muted">${s.swim_laps}구간 기록이 없어요. 삼성헬스 구간 화면(시간·스트로크)을 올리면 채워져요.</p>
+      ${pick}
+      <details class="lap-details"><summary>직접 입력</summary>${form}</details>
+    </section>`;
+  }
+  return `
+    <section class="card lap-edit-card">
+      <details class="lap-details"><summary>구간 고치기${when}</summary>${form}${pick}</details>
+    </section>`;
+}
+
+function lapView(state, groups) {
   const metric = state.lapMetric ?? 'time';
   const val = (l) => (metric === 'time' ? l.time_sec : metric === 'strokes' ? l.strokes : l.time_sec != null && l.strokes != null ? l.time_sec + l.strokes : null);
   const fmt = (v) => (v == null ? '-' : metric === 'time' ? mmss(v) : String(v));

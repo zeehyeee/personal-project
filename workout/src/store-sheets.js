@@ -122,6 +122,11 @@ export function createSyncedStore(local, client, storage = globalThis.localStora
       if (session.source !== 'demo') enqueue({ action: 'updateSession', session });
       await flush();
     },
+    async setLaps(sessionId, laps) {
+      await local.setLaps(sessionId, laps);
+      enqueue({ action: 'setLaps', session_id: sessionId, laps });
+      await flush();
+    },
     async deleteSessions(ids) {
       await local.deleteSessions(ids);
       enqueue({ action: 'deleteSessions', ids });
