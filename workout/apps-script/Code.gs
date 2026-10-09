@@ -21,8 +21,9 @@ const SHEETS = {
 // 날짜·시각이 시트에서 날짜 형식으로 바뀌지 않게 글자로 둔다
 const TEXT_COLUMNS = { sessions: ['id', 'date', 'start_time', 'sport', 'source', 'saved_at', 'condition', 'memo'], swim_laps: ['session_id', 'stroke'], settings: ['key'] };
 
+// 편집기에서 ▶실행으로 눌러도 오류 없이 시트 탭을 만들고 결과를 보여준다 (그때는 e 가 없다)
 function doGet(e) {
-  const p = e.parameter || {};
+  const p = (e && e.parameter) || { action: 'read', token: TOKEN };
   if (TOKEN && p.token !== TOKEN) return json_({ ok: false, error: 'token' });
   if (p.action === 'read') return json_({ ok: true, data: readAll_() });
   return json_({ ok: false, error: 'unknown action' });
@@ -31,7 +32,7 @@ function doGet(e) {
 // 쓰기는 POST(본문 JSON). 앱은 Content-Type 없이 보내 브라우저 사전 요청(CORS preflight)을 피한다
 function doPost(e) {
   let body;
-  try { body = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'bad json' }); }
+  try { body = JSON.parse(e && e.postData ? e.postData.contents : ''); } catch (err) { return json_({ ok: false, error: 'bad json' }); }
   if (TOKEN && body.token !== TOKEN) return json_({ ok: false, error: 'token' });
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -161,5 +162,6 @@ function replaceAll_(sessions, laps, settings) {
 }
 
 function json_(obj) {
+  console.log(JSON.stringify(obj).slice(0, 300));
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
