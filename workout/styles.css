@@ -548,7 +548,8 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 input, select, textarea { font-size: max(16px, 1em); }
 .field-input input, .le-in input, .lap-edit select, .memo-form input, .set-input input { font-size: 16px; }
 .field-input input[type="date"], .field-input input[type="time"] { -webkit-appearance: none; appearance: none; min-height: 1.4em; text-align: left; }
-html, body { overflow-x: hidden; }
+/* hidden 은 body 를 스크롤 상자로 만들어 고정 헤더(sticky)가 풀린다. clip 은 넘침만 자른다 */
+.app { overflow-x: clip; }
 
 /* 홈 화면 앱(주소창 없음): iOS 가 상태 표시줄 아래를 흐리게 덮어서 제목이 흐려진다.
    제목 줄을 그 아래로 내리고, 하위 화면 제목 줄도 배경색으로 위에 고정해 내용이 그 밑으로 지나가게 한다 */
