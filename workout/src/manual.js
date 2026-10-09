@@ -103,7 +103,9 @@ export function lapsFromForm(values, prefix, sessionId) {
     if (!timeText && !strokeText) continue;
     let time_sec = null;
     if (timeText) {
-      const m = timeText.match(/^(?:(\d+):)?(\d{1,2})$/);
+      // 숫자 키패드엔 ':' 이 없어서 '117' 처럼 들어오면 끝 두 자리를 초로 본다 (1:17)
+      const digits = /^\d{3,4}$/.test(timeText) ? `${timeText.slice(0, -2)}:${timeText.slice(-2)}` : timeText;
+      const m = digits.match(/^(?:(\d+):)?(\d{1,2})$/);
       if (!m || (m[1] != null && Number(m[2]) >= 60)) { errors.push(`구간 ${lap_no} 시간을 0:46처럼 적어주세요`); continue; }
       time_sec = Number(m[1] ?? 0) * 60 + Number(m[2]);
     }

@@ -119,7 +119,7 @@ function lapEditor(s, i) {
       <input type="hidden" name="${i}.lap.${k}.no" value="${l.lap_no}">
       <span class="le-no">${l.lap_no}</span>
       <select name="${i}.lap.${k}.stroke">${options(l.stroke)}</select>
-      <span class="field-input le-in"><input name="${i}.lap.${k}.time" value="${mmss(l.time_sec)}" inputmode="numeric" placeholder="0:00"><em>시간</em></span>
+      <span class="field-input le-in"><input name="${i}.lap.${k}.time" value="${mmss(l.time_sec)}" inputmode="numeric" placeholder="0:00"><em>분:초</em></span>
       <span class="field-input le-in"><input name="${i}.lap.${k}.strokes" value="${l.strokes ?? ''}" inputmode="numeric" placeholder="-"><em>회</em></span>
     </li>`;
   return `

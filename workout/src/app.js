@@ -284,6 +284,13 @@ root.addEventListener('click', async (e) => {
   }
 });
 
+// 구간 시간: 휴대폰 숫자 키패드엔 ':' 이 없어서 숫자만 쳐도 1:17 처럼 맞춰 준다
+root.addEventListener('input', (e) => {
+  if (!/\.lap\.\d+\.time$/.test(e.target.name ?? '')) return;
+  const d = e.target.value.replace(/\D/g, '').slice(0, 4);
+  e.target.value = d.length > 2 ? `${d.slice(0, -2)}:${d.slice(-2)}` : d;
+});
+
 // 직접 입력: 종목을 바꾸면 그 종목 칸만 보이게
 root.addEventListener('change', (e) => {
   // 설정: 바꾸면 바로 저장
