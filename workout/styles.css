@@ -423,3 +423,8 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .hero-sub .goal { color: var(--text); }
 .hero-sub .goal.done { color: #0b9d58; }
 .header .icon-btn { color: var(--grey-600); }
+
+.sync-line { margin: 4px 0 6px; font-size: var(--t6); font-weight: 600; }
+.sync-line.ok { color: #0b9d58; }
+.sync-line.warn { color: var(--red-500); }
+.sheet-form { margin: 12px 0 8px; gap: 12px; }

@@ -30,6 +30,39 @@ const row = (state, key, hint = '') => {
     </label>`;
 };
 
+const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+function sheetSection(state) {
+  const s = state.sync ?? {};
+  if (s.connected) {
+    const line = s.online
+      ? `연결됨 · 마지막 동기화 ${s.lastSync ? hhmm(new Date(s.lastSync)) : '-'}`
+      : `지금은 연결되지 않았어요${s.error ? ` (${esc(s.error)})` : ''}`;
+    return `
+      <section class="card set-card">
+        <h2>구글 시트 연결</h2>
+        <p class="sync-line ${s.online ? 'ok' : 'warn'}">${line}</p>
+        ${s.pending ? `<p class="muted">시트로 아직 보내지 못한 변경 ${s.pending}개 · 다음에 앱을 열 때 다시 보내요</p>` : ''}
+        <button class="set-btn danger" data-action="sheet-disconnect">연결 끊기</button>
+      </section>`;
+  }
+  return `
+    <section class="card set-card">
+      <h2>구글 시트 연결</h2>
+      <p class="muted">바다네 곳간처럼 구글 시트에 기록을 쌓아요. 다른 기기에서도 같은 기록을 볼 수 있어요.
+        시트의 Apps Script 를 웹 앱으로 배포한 주소와, 코드에 넣은 비밀번호를 입력하세요.</p>
+      <form id="sheet-form" class="form sheet-form" novalidate>
+        <label class="field"><span class="field-label">웹 앱 주소</span>
+          <span class="field-input"><input name="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></span></label>
+        <label class="field"><span class="field-label">비밀번호 (Code.gs 의 TOKEN)</span>
+          <span class="field-input"><input name="token" type="password" autocomplete="off"></span></label>
+        <span class="field-error"></span>
+        <button class="submit" type="submit">연결하기</button>
+      </form>
+      <p class="muted">연결하면 이 휴대폰에만 있던 기록(예시 제외)을 시트로 올려요.</p>
+    </section>`;
+}
+
 export function renderSettings(state) {
   const back = `<button class="icon-btn" data-action="back" aria-label="뒤로">${ICONS.left}</button>`;
   return `
@@ -52,9 +85,10 @@ export function renderSettings(state) {
         ${row(state, 'swim_rest_multiplier', '구간 시간이 그날 중앙값의 몇 배를 넘으면 휴식이 섞인 구간으로 볼지. 바꾸면 지난 기록도 다시 계산해요')}
       </section>
     </form>
+    ${sheetSection(state)}
     <section class="card set-card">
       <h2>데이터</h2>
-      <p class="muted">기록은 지금 이 휴대폰 브라우저에만 저장돼요. 가끔 백업 파일을 저장해 두세요.</p>
+      <p class="muted">${state.sync?.connected ? '백업 파일로도 따로 보관할 수 있어요.' : '기록은 지금 이 휴대폰 브라우저에만 저장돼요. 가끔 백업 파일을 저장해 두세요.'}</p>
       <button class="set-btn" data-action="backup">백업 파일 저장</button>
       <label class="set-btn">백업 불러오기<input type="file" id="restore-input" accept="application/json,.json" hidden></label>
       ${hasDemo(state.db.sessions) ? '<button class="set-btn danger" data-action="clear-demo">예시 데이터 지우기</button>' : ''}

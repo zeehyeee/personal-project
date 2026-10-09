@@ -1,6 +1,7 @@
 // 앱 뼈대: 헤더, 하단 탭(캘린더 / 추이), 화면 전환, 저장소 연결.
 // 화면 주소: #calendar, #weekly, #trend, #detail/YYYY-MM-DD/sport, #add, #add/manual, #add/capture
 import { createLocalStore, hasDemo, demoIds } from './store.js';
+import { createSyncedStore, createSheetClient, readSheetConfig, writeSheetConfig } from './store-sheets.js';
 import { groupByDay, groupLapsBySession } from './aggregate.js';
 import { toDateStr, monthKey, addMonths, addDays, weekStart } from './dates.js';
 import { ICONS } from './ui.js';
@@ -17,7 +18,12 @@ import { extractImage } from './capture/extract.js';
 import { mergeCaptures } from './capture/merge.js';
 import { createBrowserEngine, fileToGray } from './capture/engine-browser.js';
 
-const store = createLocalStore();
+// 구글 시트를 연결했으면 시트 동기화, 아니면 휴대폰 저장소만
+const makeStore = () => {
+  const config = readSheetConfig();
+  return config ? createSyncedStore(createLocalStore(), createSheetClient(config)) : createLocalStore();
+};
+let store = makeStore();
 const root = document.getElementById('app');
 
 const today = toDateStr(new Date());
@@ -119,8 +125,14 @@ function render() {
   root.querySelector('.chips-row [aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
+let warnedOffline = false;
 async function reload() {
   state.db = await store.load();
+  state.sync = store.status ? { ...store.status, connected: true } : { connected: false };
+  if (store.status?.online === false && !warnedOffline) {
+    warnedOffline = true;
+    setTimeout(() => toast('시트에 연결하지 못해 휴대폰에 저장된 기록을 보여드려요'), 0);
+  }
   state.days = groupByDay(state.db.sessions, groupLapsBySession(state.db.laps), state.db.settings);
   render();
 }
@@ -215,6 +227,13 @@ root.addEventListener('click', async (e) => {
   if (action === 'back') goBack();
   if (action === 'add') go('add');
   if (action === 'settings') go('settings');
+  if (action === 'sheet-disconnect') {
+    if (!confirm('구글 시트 연결을 끊을까요? 기록은 시트와 이 휴대폰에 그대로 남아요.')) return;
+    writeSheetConfig(null);
+    store = makeStore();
+    await reload();
+    toast('연결을 끊었어요');
+  }
   if (action === 'backup') {
     const data = await store.exportAll();
     const a = document.createElement('a');
@@ -345,6 +364,38 @@ async function readCaptures(files) {
   }
   render();
 }
+
+// 구글 시트 연결: 주소·비밀번호로 한 번 읽어 보고, 되면 휴대폰 기록을 시트로 올린 뒤 시트 기준으로 바꾼다
+root.addEventListener('submit', async (e) => {
+  const form = e.target.closest('#sheet-form');
+  if (!form) return;
+  e.preventDefault();
+  const url = form.url.value.trim();
+  const token = form.token.value.trim();
+  const msg = form.querySelector('.field-error');
+  msg.textContent = '';
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)) {
+    msg.textContent = '웹 앱 주소는 https://script.google.com/macros/s/…/exec 형태예요.';
+    return;
+  }
+  const button = form.querySelector('button[type=submit]');
+  button.disabled = true;
+  button.textContent = '연결하는 중…';
+  try {
+    const client = createSheetClient({ url, token });
+    await client.read();
+    const synced = createSyncedStore(createLocalStore(), client);
+    await synced.uploadLocal();
+    writeSheetConfig({ url, token });
+    store = synced;
+    await reload();
+    toast('구글 시트에 연결했어요');
+  } catch (err) {
+    msg.textContent = err instanceof TypeError ? '주소에 연결하지 못했어요. 웹 앱 배포의 액세스가 "모든 사용자"인지 확인해주세요.' : err.message;
+    button.disabled = false;
+    button.textContent = '연결하기';
+  }
+});
 
 root.addEventListener('submit', async (e) => {
   const form = e.target.closest('#capture-form');
