@@ -2,6 +2,7 @@
 import { SPORTS, SPORT_META } from '../sports.js';
 import { ICONS, esc } from '../ui.js';
 import { hasDemo } from '../store.js';
+import { DEFAULT_SHEET_URL } from '../store-sheets.js';
 
 // 설정 항목: [키, 이름, 단위, 최소, 최대, 소수 허용]
 export const SETTING_FIELDS = {
@@ -53,7 +54,7 @@ function sheetSection(state) {
         시트의 Apps Script 를 웹 앱으로 배포한 주소를 넣으면, 앱을 열 때마다 시트와 맞춰요.</p>
       <form id="sheet-form" class="form sheet-form" novalidate>
         <label class="field"><span class="field-label">웹 앱 주소</span>
-          <span class="field-input"><input name="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></span></label>
+          <span class="field-input"><input name="url" inputmode="url" autocomplete="off" value="${esc(DEFAULT_SHEET_URL)}" placeholder="https://script.google.com/macros/s/…/exec"></span></label>
         <details class="field-more"><summary>비밀번호 <small>선택 · Code.gs 의 TOKEN 을 쓴 경우만</small></summary>
           <span class="field-input" style="margin-top:8px"><input name="token" type="password" autocomplete="off"></span></details>
         <span class="field-error"></span>

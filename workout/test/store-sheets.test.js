@@ -110,3 +110,18 @@ test('기록 수정·메모: 휴대폰과 시트 모두 바뀌고, 구간 기록
   assert.equal(db.sessions[0].condition, 'great');
   assert.equal(db.sessions[0].memo, '한강');
 });
+
+test('기본 시트: 처음 여는 기기는 자동 연결 설정, 연결 끊기를 누른 기기는 자동 연결 안 함', async () => {
+  const { autoSheetConfig, writeSheetConfig, readSheetConfig, DEFAULT_SHEET_URL } = await import('../src/store-sheets.js');
+  const storage = memoryStorage();
+  assert.deepEqual(autoSheetConfig(storage), { url: DEFAULT_SHEET_URL });
+  writeSheetConfig({ url: DEFAULT_SHEET_URL }, storage);
+  assert.equal(autoSheetConfig(storage), null); // 이미 연결됨
+  writeSheetConfig(null, storage);
+  assert.equal(readSheetConfig(storage), null);
+  assert.equal(autoSheetConfig(storage), null); // 끊은 기기
+  writeSheetConfig({ url: DEFAULT_SHEET_URL }, storage);
+  writeSheetConfig(null, storage);
+  writeSheetConfig({ url: 'https://x/exec' }, storage);
+  assert.equal(readSheetConfig(storage).url, 'https://x/exec');
+});

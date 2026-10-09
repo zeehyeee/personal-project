@@ -5,6 +5,11 @@
 
 const PENDING_KEY = 'workout-log:pending';
 const CONFIG_KEY = 'workout-log:sheet';
+// 연결 끊기를 누른 기기에서는 자동으로 다시 연결하지 않는다
+const OFF_KEY = 'workout-log:sheet-off';
+
+// 바다네 체육관 데이터 베이스 웹 앱 (바다네 곳간처럼 처음부터 채워 두고, 앱을 열면 바로 연결)
+export const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycby4dYPviXPY2Vp0_gtctjdN3pzOWTz1PU7Ppi-6z3FEReNLRwCwNw8rXW9tgdUzaGGJPw/exec';
 
 const NUMERIC = ['duration_sec', 'distance_m', 'kcal', 'avg_hr', 'avg_cadence', 'swim_laps', 'swim_total_strokes', 'pool_length_m',
   'zone_max_min', 'zone_high_min', 'zone_mid_min', 'zone_low_min', 'lap_no', 'time_sec', 'strokes'];
@@ -32,8 +37,19 @@ export function readSheetConfig(storage = globalThis.localStorage) {
   }
 }
 export function writeSheetConfig(config, storage = globalThis.localStorage) {
-  if (config) storage.setItem(CONFIG_KEY, JSON.stringify(config));
-  else storage.removeItem(CONFIG_KEY);
+  if (config) {
+    storage.setItem(CONFIG_KEY, JSON.stringify(config));
+    storage.removeItem(OFF_KEY);
+  } else {
+    storage.removeItem(CONFIG_KEY);
+    storage.setItem(OFF_KEY, '1');
+  }
+}
+
+// 아직 연결한 적 없고 끊지도 않은 기기: 기본 주소로 자동 연결할 설정
+export function autoSheetConfig(storage = globalThis.localStorage) {
+  if (readSheetConfig(storage) || storage.getItem(OFF_KEY)) return null;
+  return { url: DEFAULT_SHEET_URL };
 }
 
 export function createSheetClient({ url, token }, fetchImpl = globalThis.fetch) {

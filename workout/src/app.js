@@ -1,7 +1,7 @@
 // 앱 뼈대: 헤더, 하단 탭(캘린더 / 추이), 화면 전환, 저장소 연결.
 // 화면 주소: #calendar, #weekly, #trend, #detail/YYYY-MM-DD/sport, #add, #add/manual, #add/capture
 import { createLocalStore, hasDemo, demoIds } from './store.js';
-import { createSyncedStore, createSheetClient, readSheetConfig, writeSheetConfig } from './store-sheets.js';
+import { createSyncedStore, createSheetClient, readSheetConfig, writeSheetConfig, autoSheetConfig } from './store-sheets.js';
 import { groupByDay, groupLapsBySession } from './aggregate.js';
 import { toDateStr, monthKey, addMonths, addDays, weekStart } from './dates.js';
 import { ICONS } from './ui.js';
@@ -501,4 +501,20 @@ window.addEventListener('hashchange', () => {
   window.scrollTo(0, 0);
 });
 
-reload();
+// 처음 여는 기기(홈 화면 앱 포함)는 기본 시트로 바로 연결한다. 시트에 닿지 않으면 이번엔 휴대폰 저장소로
+async function autoConnect() {
+  const config = autoSheetConfig();
+  if (!config) return;
+  try {
+    const client = createSheetClient(config);
+    await client.read();
+    const synced = createSyncedStore(createLocalStore(), client);
+    await synced.uploadLocal();
+    writeSheetConfig(config);
+    store = synced;
+  } catch {
+    // 다음에 앱을 열 때 다시 시도
+  }
+}
+
+autoConnect().finally(reload);
