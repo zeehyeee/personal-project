@@ -26,19 +26,40 @@ export function to24h(ampm, h, mm) {
   return `${String(hour).padStart(2, '0')}:${mm}`;
 }
 
+// `7:28` 이 OCR 에서 `728`(콜론 빠짐)이나 `7728`(콜론을 7로) 로 깨져도 시·분을 되살린다
+const CLOCK = '([\\d:;.]{3,5})';
+export function looseClock(token) {
+  const parts = token.split(/[:;.]/).filter(Boolean);
+  let h, m;
+  if (parts.length === 2) [h, m] = parts;
+  else {
+    const d = token.replace(/\D/g, '');
+    if (d.length === 3) [h, m] = [d.slice(0, 1), d.slice(1)];
+    else if (d.length === 4) [h, m] = Number(d.slice(0, 2)) <= 12 ? [d.slice(0, 2), d.slice(2)] : [d.slice(0, 1), d.slice(2)];
+    else return null;
+  }
+  if (!/^\d{1,2}$/.test(h) || !/^\d{2}$/.test(m) || Number(h) > 12 || Number(m) > 59) return null;
+  return [h, m];
+}
+const ampmTime = (ampm, token) => {
+  const c = looseClock(token);
+  return c ? to24h(ampm, c[0], c[1]) : null;
+};
+
 // 전체보기(일별) 화면: `달리기  오후 7:28` 다음 줄 `00:18:51 2.03 km`
 export function parseDaily(text) {
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
   const rows = [];
   for (let i = 0; i < lines.length; i++) {
-    const t = lines[i].match(/(오전|오후)\s*(\d{1,2}):(\d{2})/);
-    if (!t) continue;
+    const t = lines[i].match(new RegExp(`(오전|오후)\\s*${CLOCK}`));
+    const start_time = t && ampmTime(t[1], t[2]);
+    if (!start_time) continue;
     const v = (lines[i + 1] ?? '').match(/(\d{1,2}:\d{2}:\d{2})\s+([\d.,]+)\s*(km|kcal|m)\b/);
     if (!v) continue;
     const amount = Number(v[2].replace(/,/g, ''));
     rows.push({
       sport: detectSport(lines[i]),
-      start_time: to24h(t[1], t[2], t[3]),
+      start_time,
       duration_sec: parseClock(v[1]),
       ...(v[3] === 'kcal' ? { kcal: amount } : { distance_m: v[3] === 'km' ? Math.round(amount * 1000) : amount }),
     });
@@ -51,10 +72,11 @@ export function parseDaily(text) {
 // 결과 헤더: `10월 2일 (금) 오후 7:28 - 오후 7:50` 와 큰 글씨 `18분 51초`
 export function parseHeader(text) {
   // OCR이 콜론을 빠뜨리는 경우(`오후 728`)도 받는다
-  const m = text.match(/(오전|오후)\s*(\d{1,2}):?(\d{2})\s*[-~]\s*(오전|오후)\s*(\d{1,2}):?(\d{2})/);
+  const m = text.match(new RegExp(`(오전|오후)\\s*${CLOCK}\\s*[-~]\\s*(오전|오후)\\s*${CLOCK}`));
   if (!m) return null;
-  const start = to24h(m[1], m[2], m[3]);
-  const end = to24h(m[4], m[5], m[6]);
+  const start = ampmTime(m[1], m[2]);
+  const end = ampmTime(m[3], m[4]);
+  if (!start) return null;
   // `18분 51초`, 아이폰 `1 시간 25 분` (초 없음). 초는 같은 줄의 숫자만 (다음 줄 `775 m` 를 초로 읽지 않게)
   // 큰 글씨 `1` 이 `]` `|` `l` `I` 로 깨지는 경우도 받는다
   const fixed = text.replace(/[\]|lI](?=[ \t]*시간)/g, '1');

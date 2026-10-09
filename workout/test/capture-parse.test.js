@@ -79,3 +79,15 @@ test('헤더(아이폰): `1 시간 25 분` 다음 줄 `775 m` 를 초로 읽지 
   assert.equal(b.duration_sec, 5100);
   assert.equal(parseHeader('10월 2일 (금) 오후 7:28 - 오후 7:50\n18분 51초').duration_has_sec, true);
 });
+
+test('시각: 콜론이 빠지거나(728) 7로 읽혀도(7728) 7:28, 10:57·12:23 은 그대로', async () => {
+  const { looseClock } = await import('../src/capture/parse.js');
+  assert.deepEqual(looseClock('7:28'), ['7', '28']);
+  assert.deepEqual(looseClock('728'), ['7', '28']);
+  assert.deepEqual(looseClock('7728'), ['7', '28']);
+  assert.deepEqual(looseClock('1057'), ['10', '57']);
+  assert.deepEqual(looseClock('12:23'), ['12', '23']);
+  assert.equal(looseClock('7799'), null);
+  const d = parseDaily('10월 2일 (금)\n3세션 3.49 km\n달리기    오후 7728\n00:18:51 2.03 km   Galaxy Fit2\n달리기 @   오후 7:18\n00:07:59 1.05 km');
+  assert.deepEqual(d.rows.map((r) => r.start_time), ['19:28', '19:18']);
+});
