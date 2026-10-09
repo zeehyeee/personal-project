@@ -167,7 +167,26 @@ test('고친 직후엔 휴대폰 사본으로 바로 보이고(snapshot), 시트
   await Promise.all([store.updateSession({ ...run, condition: 'good' }), store.updateSession({ ...run, condition: 'great' })]);
   assert.equal((await store.snapshot()).sessions[0].condition, 'great');
   await store.settle();
-  assert.equal(posts, 3);
+  assert.equal(posts, 2); // 추가 1번 + 두 번 고친 것은 마지막 것만 1번
   assert.equal(store.status.pending, 0);
   assert.equal((await store.load()).sessions[0].condition, 'great');
+});
+
+test('대기 중인 변경 합치기: 같은 기록은 마지막만, 안 보낸 추가에는 바로 반영, 보내는 중인 것은 그대로', async () => {
+  const { coalesce } = await import('../src/store-sheets.js');
+  const add = { action: 'addSessions', sessions: [run], laps: [], seq: 1 };
+  // 아직 안 보낸 추가 안의 기록을 고치면 추가에 합쳐진다
+  let q = coalesce([add], { action: 'updateSession', session: { ...run, memo: 'a' }, seq: 2 });
+  assert.equal(q.length, 1);
+  assert.equal(q[0].sessions[0].memo, 'a');
+  // 추가를 보내는 중이면 건드리지 않고, 수정끼리는 마지막만
+  q = coalesce([add], { action: 'updateSession', session: { ...run, memo: 'a' }, seq: 2 }, 1);
+  q = coalesce(q, { action: 'updateSession', session: { ...run, memo: 'b' }, seq: 3 }, 1);
+  assert.deepEqual(q.map((o) => o.seq), [1, 3]);
+  assert.equal(q[0].sessions[0].memo, undefined);
+  // 구간 바꾸기도 마지막만, 설정은 합치기
+  q = coalesce([{ action: 'setLaps', session_id: 'x', laps: [1], seq: 1 }], { action: 'setLaps', session_id: 'x', laps: [2], seq: 2 });
+  assert.deepEqual(q.map((o) => o.laps), [[2]]);
+  q = coalesce([{ action: 'saveSettings', patch: { a: 1 }, seq: 1 }], { action: 'saveSettings', patch: { b: 2 }, seq: 2 });
+  assert.deepEqual(q, [{ action: 'saveSettings', patch: { a: 1, b: 2 }, seq: 1 }]);
 });

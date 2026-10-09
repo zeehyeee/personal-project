@@ -69,11 +69,47 @@ export function createSheetClient({ url, token }, fetchImpl = globalThis.fetch) 
   };
 }
 
+// 대기 중인 변경 합치기: 같은 기록을 여러 번 고치면 마지막 상태만 한 번 보낸다
+// - 기록 수정: 아직 안 보낸 '추가'에 들어 있으면 그 안의 기록을 바꾸고, 아니면 앞선 같은 기록 수정을 지운다
+// - 구간 바꾸기: 아직 안 보낸 '추가'에 들어 있으면 그 구간을 바꾸고, 아니면 앞선 같은 세션 구간 바꾸기를 지운다
+// - 설정: 앞선 설정 저장에 합친다
+export function coalesce(queue, op, sendingSeq = null) {
+  const waiting = (o) => o.seq == null || o.seq !== sendingSeq;
+  const q = [...queue];
+  const addIdx = (id) => q.findIndex((o) => waiting(o) && o.action === 'addSessions' && o.sessions.some((s) => s.id === id));
+  if (op.action === 'updateSession') {
+    const i = addIdx(op.session.id);
+    if (i >= 0) {
+      q[i] = { ...q[i], sessions: q[i].sessions.map((s) => (s.id === op.session.id ? op.session : s)) };
+      return q;
+    }
+    return [...q.filter((o) => !(waiting(o) && o.action === 'updateSession' && o.session.id === op.session.id)), op];
+  }
+  if (op.action === 'setLaps') {
+    const i = addIdx(op.session_id);
+    if (i >= 0) {
+      q[i] = { ...q[i], laps: [...q[i].laps.filter((l) => l.session_id !== op.session_id), ...op.laps] };
+      return q;
+    }
+    return [...q.filter((o) => !(waiting(o) && o.action === 'setLaps' && o.session_id === op.session_id)), op];
+  }
+  if (op.action === 'saveSettings') {
+    const i = q.findLastIndex((o) => waiting(o) && o.action === 'saveSettings');
+    if (i >= 0) {
+      q[i] = { ...q[i], patch: { ...q[i].patch, ...op.patch } };
+      return q;
+    }
+  }
+  return [...q, op];
+}
+
 export function createSyncedStore(local, client, storage = globalThis.localStorage) {
   const status = { online: null, pending: 0, lastSync: null, error: null };
   const queue = () => { try { return JSON.parse(storage.getItem(PENDING_KEY)) ?? []; } catch { return []; } };
   const setQueue = (q) => { storage.setItem(PENDING_KEY, JSON.stringify(q)); status.pending = q.length; };
-  const enqueue = (op) => setQueue([...queue(), op]);
+  // 보내는 중인 변경(맨 앞)은 건드리지 않고, 아직 대기 중인 변경끼리는 합친다
+  let sending = null; // 지금 보내는 변경의 seq
+  const enqueue = (op) => setQueue(coalesce(queue(), { ...op, seq: Date.now() + Math.random() }, sending));
   const real = (sessions) => sessions.filter((s) => s.source !== 'demo');
 
   // 보내기는 한 번에 하나만 (겹치면 같은 변경을 두 번 보낸다). 보내는 중에 쌓인 변경도 이어서 보낸다
@@ -81,14 +117,20 @@ export function createSyncedStore(local, client, storage = globalThis.localStora
   async function sendAll() {
     let q;
     while ((q = queue()).length) {
+      const op = q[0];
+      sending = op.seq ?? null;
       try {
-        await client.send(q[0]);
+        await client.send(op);
       } catch (err) {
         status.online = false;
         status.error = err.message;
         return false;
+      } finally {
+        sending = null;
       }
-      setQueue(queue().slice(1));
+      // 보낸 것만 뺀다 (보내는 동안 뒤에 쌓이거나 합쳐진 변경은 그대로)
+      const rest = queue();
+      setQueue(op.seq != null ? rest.filter((o) => o.seq !== op.seq) : rest.slice(1));
     }
     status.online = true;
     status.error = null;
