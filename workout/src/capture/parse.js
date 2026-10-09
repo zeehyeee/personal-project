@@ -55,10 +55,12 @@ export function parseHeader(text) {
   if (!m) return null;
   const start = to24h(m[1], m[2], m[3]);
   const end = to24h(m[4], m[5], m[6]);
-  // `18분 51초` (초 글자가 깨져도 숫자만 있으면 받는다)
-  const d = text.match(/(?:(\d+)\s*시간\s*)?(\d+)\s*분\s*(\d{1,2})?/);
+  // `18분 51초`, 아이폰 `1 시간 25 분` (초 없음). 초는 같은 줄의 숫자만 (다음 줄 `775 m` 를 초로 읽지 않게)
+  // 큰 글씨 `1` 이 `]` `|` `l` `I` 로 깨지는 경우도 받는다
+  const fixed = text.replace(/[\]|lI](?=[ \t]*시간)/g, '1');
+  const d = fixed.match(/(?:(\d+)[ \t]*시간[ \t]*)?(\d+)[ \t]*분(?:[ \t]*(\d{1,2})(?!\d))?/);
   const duration_sec = d ? Number(d[1] ?? 0) * 3600 + Number(d[2]) * 60 + Number(d[3] ?? 0) : null;
-  return { date: parseKoDate(text), start_time: start, end_time: end, duration_sec };
+  return { date: parseKoDate(text), start_time: start, end_time: end, duration_sec, duration_has_sec: Boolean(d?.[3]) };
 }
 
 // `2.03 km` → 2030, `450 m` → 450

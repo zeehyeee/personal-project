@@ -50,7 +50,7 @@ export async function extractImage(input, engine) {
   // 구간 화면: 제목 `구간`, 또는 영법 이름이 여러 줄 (제목이 안 읽혀도 알아보게)
   const strokeLines = (text.match(/크롤|배영|평영|혼영|접영/g) ?? []).length;
   if ((/구간/.test(title) || strokeLines >= 3) && !/운동\s*시간|세션/.test(text)) {
-    items.push({ kind: 'laps', sport: 'swim', ...(await extractLaps(gray, engine)) });
+    items.push({ kind: 'laps', sport: 'swim', ...(await extractLaps(gray, engine, lines)) });
   } else if (!/운동\s*시간/.test(text) && (/세션/.test(text) || DAILY_ROW.test(text))) {
     // 전체보기: `N세션` 줄이 깨져도 `00:11:46 2.36 km` 같은 세션 줄로 알아본다. 날짜 줄부터 아래를 다시 읽는다
     // 날짜 줄: `10월 6일 (화)` 이 `10 6일 (화)` 로 깨져도 `(요일)` 로 찾는다
@@ -92,7 +92,7 @@ async function extractDetail(gray, engine, sport) {
 }
 
 // 수영 구간: 시간 칸에서 글자 띠로 줄을 나누고, 줄마다 번호·값·영법을 따로 읽는다
-async function extractLaps(gray, engine) {
+async function extractLaps(gray, engine, pageLines = []) {
   const bin = threshold(gray, LAP_TH);
   const top = Math.round(0.12 * gray.height), bottom = Math.round(0.9 * gray.height);
   const body = crop(bin, 0, top, 1, bottom - top);
@@ -104,7 +104,12 @@ async function extractLaps(gray, engine) {
     const no = readDigits(crop(bin, 0.03, y0 - m, 0.13, y1 - y0 + 2 * m)) ?? '';
     const v = readDigits(crop(bin, 0.17, y0 - m, 0.19, y1 - y0 + 2 * m)) ?? '';
     const st = await engine.ocr(region(gray, 0.40, y0 - m, 0.62, y1 + m, 1, TH), { lang: 'kor', psm: 7 });
-    const stroke = parseStroke(st.text);
+    let stroke = parseStroke(st.text);
+    if (!stroke && /^\d/.test(v)) {
+      const again = await engine.ocr(region(gray, 0.40, y0 - m, 0.56, y1 + m, 2, 170), { lang: 'kor', psm: 7 });
+      stroke = parseStroke(again.text)
+        ?? parseStroke(pageLines.filter((l) => l.y0 < y1 + m && l.y1 > y0 - m).map((l) => l.text).join(' '));
+    }
     let value = null, type = null;
     if (/^\d{2}:\d{2}$/.test(v)) { value = parseClock(v); type = 'time'; }
     else if (/^\d{1,2}$/.test(v)) { value = Number(v); type = 'strokes'; }

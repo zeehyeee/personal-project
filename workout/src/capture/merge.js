@@ -16,7 +16,15 @@ function resolveDate(d, today) {
 export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() }) {
   const groups = []; // { sport, duration_sec, date, start_time, fields, sources:Set }
   const notes = [];
-  const findGroup = (sport, duration) => groups.find((g) => g.sport === sport && near(g.duration_sec, duration));
+  const findGroup = (sport, duration, tol) => groups.find((g) => g.sport === sport && (tol ? Math.abs(g.duration_sec - duration) <= tol : near(g.duration_sec, duration)));
+  // 헤더의 `오전 10:40 - 오전 11:49` 안에 들어가는 세션 (운동 시간 ≤ 총 시간, 쉰 시간은 20분까지)
+  const byWindow = (sport, start, end) => {
+    if (!start || !end) return null;
+    const mins = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+    const win = ((mins(end) - mins(start) + 1440) % 1440) * 60;
+    const fit = groups.filter((g) => g.sport === sport && !g.fields.date && g.duration_sec <= win + 60 && g.duration_sec >= win - 1200);
+    return fit.sort((a, b) => (win - a.duration_sec) - (win - b.duration_sec))[0] ?? null;
+  };
   const add = (sport, duration, patch, source) => {
     let g = findGroup(sport, duration);
     if (!g) groups.push((g = { sport, duration_sec: duration, fields: {}, sources: new Set() }));
@@ -53,8 +61,10 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
   // 3) 결과 헤더: 날짜·시작 시각. 운동 시간이나 시작 시각으로 세션을 찾는다
   for (const it of items.filter((i) => i.kind === 'header' && i.sport)) {
     const date = resolveDate(it.date, today);
-    const g = (it.duration_sec != null && findGroup(it.sport, it.duration_sec))
+    const tol = it.duration_has_sec === false ? 60 : 0;
+    const g = (it.duration_sec != null && findGroup(it.sport, it.duration_sec, tol))
       || groups.find((x) => x.sport === it.sport && x.fields.start_time === it.start_time)
+      || byWindow(it.sport, it.start_time, it.end_time)
       || (groups.filter((x) => x.sport === it.sport).length === 1 ? groups.find((x) => x.sport === it.sport) : null);
     if (g) {
       if (!g.fields.date) g.fields.date = date;

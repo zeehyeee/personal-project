@@ -21,7 +21,7 @@ test('전체보기: 수영은 두 번째 값이 칼로리', () => {
 
 test('결과 헤더: 날짜·시작·끝·운동 시간', () => {
   const r = parseHeader('10월 2일 (금) 오후 7:28 - 오후 7:50\n18분 51초');
-  assert.deepEqual(r, { date: { month: 10, day: 2, weekday: '금' }, start_time: '19:28', end_time: '19:50', duration_sec: 1131 });
+  assert.deepEqual(r, { date: { month: 10, day: 2, weekday: '금' }, start_time: '19:28', end_time: '19:50', duration_sec: 1131, duration_has_sec: true });
 });
 
 test('결과 헤더: 콜론 빠짐, 초 글자 깨짐', () => {
@@ -69,4 +69,13 @@ test('구간 번호 보정: 빠지거나 붙어 읽힌 번호', () => {
   assert.equal(repairLapNumbers([null, null]), null);
   // 2번째 줄을 못 읽어 빠졌을 때: 위치(0,2,3,…)로 번호를 매긴다
   assert.deepEqual(repairLapNumbers([null, 3, 4, 5], [0, 2, 3, 4]), [1, 3, 4, 5]);
+});
+
+test('헤더(아이폰): `1 시간 25 분` 다음 줄 `775 m` 를 초로 읽지 않고, 깨진 `]` 도 1시간으로', () => {
+  const a = parseHeader('10월 4일 (일) 오전 10:57 - 오후 12:23\n] 시간 25 분\n775 m   1M1');
+  assert.equal(a.duration_sec, 5100);
+  assert.equal(a.duration_has_sec, false);
+  const b = parseHeader('10월 4일 (일) 오전 10:57 - 오후 12:23\n1 시간 25 분');
+  assert.equal(b.duration_sec, 5100);
+  assert.equal(parseHeader('10월 2일 (금) 오후 7:28 - 오후 7:50\n18분 51초').duration_has_sec, true);
 });

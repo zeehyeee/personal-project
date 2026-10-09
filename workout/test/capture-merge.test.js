@@ -111,3 +111,20 @@ test('구간 고치기 입력 → 구간 행: 0:46·46 모두 초로, 빈 줄은
   ]);
   assert.match(lapsFromForm({ '0.lap.0.no': '3', '0.lap.0.time': '1:75' }, '0', 's').errors[0], /구간 3 시간/);
 });
+
+test('아이폰 헤더: 초 없는 운동 시간(±60초)·시작~끝 시각으로 상세와 짝지어 날짜를 붙인다', () => {
+  const items = [
+    { kind: 'detail', sport: 'swim', duration_sec: 5146, distance_m: 775, kcal: 1041 },
+    { kind: 'detail', sport: 'swim', duration_sec: 4189, distance_m: 1025, kcal: 852 },
+    { kind: 'header', sport: 'swim', date: { month: 10, day: 4, weekday: '일' }, start_time: '10:57', end_time: '12:23', duration_sec: 5100, duration_has_sec: false },
+    { kind: 'header', sport: 'swim', date: { month: 10, day: 3, weekday: '토' }, start_time: '10:40', end_time: '11:49', duration_sec: null },
+  ];
+  const r = mergeCaptures(items, { today: '2026-10-09', newId: () => 'x' });
+  assert.equal(r.sessions.length, 2); // 헤더가 따로 세션을 만들지 않음
+  const by = Object.fromEntries(r.sessions.map((s) => [s.session.distance_m, s]));
+  assert.equal(by[775].session.date, '2026-10-04');
+  assert.equal(by[775].session.start_time, '10:57');
+  assert.equal(by[1025].session.date, '2026-10-03');
+  assert.equal(by[1025].session.start_time, '10:40');
+  assert.ok(r.sessions.every((s) => !s.needsDate));
+});
