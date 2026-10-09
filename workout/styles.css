@@ -488,13 +488,17 @@ main { padding: 4px 16px calc(var(--tabbar-h) + 24px + env(safe-area-inset-botto
 .detail-icon { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 30%, white); }
 
 /* ── 첫 화면 헤드라인: 연속 기록 + 이번 주 7일 ── */
-.streak-hero { padding: 14px 4px 18px; }
-.sh-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.sh-streak { display: flex; align-items: center; gap: 4px; font-size: var(--t5); font-weight: 700; }
-.sh-streak.zero { color: var(--grey-600); }
-.sh-streak.zero .flame { filter: grayscale(1); opacity: 0.45; }
-.sh-week { font-size: var(--t7); color: var(--grey-600); }
-.sh-week b { color: var(--text); }
+/* 이번 달·연속: 예시 데이터 안내와 같은 흰 띠 */
+.streak-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 14px 18px; margin-bottom: 12px; border-radius: var(--radius-item);
+  background: var(--surface); font-size: var(--t6); color: var(--grey-800);
+}
+.streak-bar .flame { margin-right: 6px; }
+.streak-bar b { font-weight: 700; color: var(--text); }
+.streak-bar.zero .flame { filter: grayscale(1); opacity: 0.45; }
+.sb-right { flex: none; font-size: var(--t7); color: var(--grey-600); }
+.sb-right.cheer { color: var(--primary); font-weight: 700; }
 .week-dots { display: flex; justify-content: space-between; }
 .wd { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--grey-500); }
 .wd i { width: 26px; height: 26px; border-radius: 50%; background: var(--grey-200); }

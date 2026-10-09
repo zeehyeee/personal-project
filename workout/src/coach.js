@@ -17,6 +17,7 @@ export function todayCoach(days, today) {
   const base = {
     streak: st.days,
     streakUntilYesterday: st.untilYesterday,
+    doneToday: doneToday.length > 0,
     week,
     weekDays: week.filter((d) => d.done).length,
     month: { days: monthActiveDays(dates, today), elapsed: Number(today.slice(8)) },

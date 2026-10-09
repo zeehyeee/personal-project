@@ -1,4 +1,4 @@
-// 캘린더 탭: 연속 기록 두 줄 → 월 캘린더 → 선택한 날 목록 (오늘 기록이 없으면 할 일 한 줄 + 고양이)
+// 캘린더 탭: 이번 달·연속 한 줄 → 월 캘린더 → 선택한 날 목록 (오늘 기록이 없으면 할 일 한 줄 + 고양이)
 import { SPORTS, SPORT_META } from '../sports.js';
 import { monthGrid, monthKey, weekStart, addDays, weekLabel } from '../dates.js';
 import { weeklyReport } from '../report.js';
@@ -7,18 +7,14 @@ import { todayCoach } from '../coach.js';
 import { formatMinutes, formatDistance } from '../format.js';
 import { ICONS, SPORT_ICON, CONDITION_EMOJI, dateLabel, emptyState } from '../ui.js';
 
-// 배경 위 두 줄: 연속 기록 · 이번 주 몇 일 → 이번 주 7일 점 (할 일 한 줄은 오늘 빈 칸에)
-function streakHero(c) {
-  const WD = '일월화수목금토';
-  const dots = c.week.map((d, i) => `
-    <span class="wd ${d.done ? 'done' : ''}${d.today ? ' today' : ''}${d.future ? ' future' : ''}"><i></i>${WD[i]}</span>`).join('');
+// 예시 데이터 안내와 같은 흰 띠 한 줄: 왼쪽 이번 달 운동일, 오른쪽 연속 일차 (오늘 아직이면 응원)
+function streakBar(c) {
+  const left = c.month.days ? `이번 달 <b>${c.month.days}일째</b> 운동했어요` : '이번 달 첫 운동을 기다려요';
+  const right = c.doneToday ? `연속 <b>${c.streak}일차</b>` : '오늘도 달려요!';
   return `
-    <section class="streak-hero">
-      <div class="sh-top">
-        <b class="sh-streak ${c.streak ? '' : 'zero'}"><span class="flame">🔥</span>연속 ${c.streak}일</b>
-        <span class="sh-week">이번 주 <b>${c.weekDays}</b>/7일</span>
-      </div>
-      <div class="week-dots">${dots}</div>
+    <section class="streak-bar ${c.month.days ? '' : 'zero'}">
+      <span><span class="flame">🔥</span>${left}</span>
+      <span class="sb-right ${c.doneToday ? '' : 'cheer'}">${right}</span>
     </section>`;
 }
 
@@ -103,5 +99,5 @@ function cond(day, state) {
 
 export function renderCalendar(state) {
   const coach = todayCoach(state.days, state.today);
-  return streakHero(coach) + calendarCard(state) + selectedDayCard(state, coach) + reportCard(state);
+  return streakBar(coach) + calendarCard(state) + selectedDayCard(state, coach) + reportCard(state);
 }
