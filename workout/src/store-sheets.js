@@ -76,9 +76,11 @@ export function createSyncedStore(local, client, storage = globalThis.localStora
   const enqueue = (op) => setQueue([...queue(), op]);
   const real = (sessions) => sessions.filter((s) => s.source !== 'demo');
 
-  async function flush() {
-    let q = queue();
-    while (q.length) {
+  // 보내기는 한 번에 하나만 (겹치면 같은 변경을 두 번 보낸다). 보내는 중에 쌓인 변경도 이어서 보낸다
+  let flushing = null;
+  async function sendAll() {
+    let q;
+    while ((q = queue()).length) {
       try {
         await client.send(q[0]);
       } catch (err) {
@@ -86,14 +88,20 @@ export function createSyncedStore(local, client, storage = globalThis.localStora
         status.error = err.message;
         return false;
       }
-      q = q.slice(1);
-      setQueue(q);
+      setQueue(queue().slice(1));
     }
+    status.online = true;
+    status.error = null;
     return true;
   }
+  const flush = () => (flushing ??= sendAll().finally(() => { flushing = null; }));
 
   return {
     status,
+    // 휴대폰 사본만 바로 읽기 (고친 뒤 화면을 즉시 다시 그릴 때. 시트는 뒤에서 맞춘다)
+    snapshot: () => local.load(),
+    // 뒤에서 보내는 중인 변경이 끝날 때까지 기다리기 (테스트·연결 끊기 전)
+    settle: () => flush(),
     async load() {
       // 아직 시트로 못 보낸 변경이 있으면 시트 내용으로 덮지 않는다 (덮으면 방금 고친 것이 되돌아간다)
       if (!(await flush())) {
@@ -119,27 +127,27 @@ export function createSyncedStore(local, client, storage = globalThis.localStora
       const send = real(sessions);
       const ids = new Set(send.map((s) => s.id));
       if (send.length) enqueue({ action: 'addSessions', sessions: send, laps: laps.filter((l) => ids.has(l.session_id)) });
-      await flush();
+      flush();
     },
     async updateSession(session) {
       await local.updateSession(session);
       if (session.source !== 'demo') enqueue({ action: 'updateSession', session });
-      await flush();
+      flush();
     },
     async setLaps(sessionId, laps) {
       await local.setLaps(sessionId, laps);
       enqueue({ action: 'setLaps', session_id: sessionId, laps });
-      await flush();
+      flush();
     },
     async deleteSessions(ids) {
       await local.deleteSessions(ids);
       enqueue({ action: 'deleteSessions', ids });
-      await flush();
+      flush();
     },
     async saveSettings(patch) {
       await local.saveSettings(patch);
       enqueue({ action: 'saveSettings', patch });
-      await flush();
+      flush();
     },
     exportAll: () => local.exportAll(),
     async importAll(data) {

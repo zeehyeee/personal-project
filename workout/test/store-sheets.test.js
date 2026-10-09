@@ -146,6 +146,7 @@ test('시트로 못 보낸 변경이 있으면 시트 내용으로 덮지 않는
   const store = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, api.fetchImpl), storage);
   await store.load();
   await store.addSessions([run]);
+  await store.settle();
   // 시트가 이 변경을 거절하는 상황 (예: 예전 Code.gs 라 모르는 동작)
   const reject = async (url, opts) => (opts?.method === 'POST' ? { json: async () => ({ ok: false, error: 'unknown action' }) } : api.fetchImpl(url, opts));
   const store2 = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, reject), storage);
@@ -153,4 +154,20 @@ test('시트로 못 보낸 변경이 있으면 시트 내용으로 덮지 않는
   const db = await store2.load();
   assert.equal(db.sessions.find((x) => x.id === run.id).condition, 'great');
   assert.equal(store2.status.pending, 1);
+});
+
+test('고친 직후엔 휴대폰 사본으로 바로 보이고(snapshot), 시트로는 뒤에서 한 번씩만 보낸다', async () => {
+  const api = fakeAppsScript();
+  const storage = memoryStorage();
+  let posts = 0;
+  const counting = async (url, opts) => { if (opts?.method === 'POST') posts++; return api.fetchImpl(url, opts); };
+  const store = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, counting), storage);
+  await store.load();
+  await store.addSessions([run]);
+  await Promise.all([store.updateSession({ ...run, condition: 'good' }), store.updateSession({ ...run, condition: 'great' })]);
+  assert.equal((await store.snapshot()).sessions[0].condition, 'great');
+  await store.settle();
+  assert.equal(posts, 3);
+  assert.equal(store.status.pending, 0);
+  assert.equal((await store.load()).sessions[0].condition, 'great');
 });

@@ -129,6 +129,14 @@ function render() {
   root.querySelector('.chips-row [aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
+// 고친 뒤: 휴대폰 사본으로 바로 다시 그린다 (시트로는 뒤에서 보낸다)
+async function refresh() {
+  state.db = await (store.snapshot ? store.snapshot() : store.load());
+  state.sync = store.status ? { ...store.status, connected: true } : { connected: false };
+  state.days = groupByDay(state.db.sessions, groupLapsBySession(state.db.laps), state.db.settings);
+  render();
+}
+
 let warnedOffline = false;
 async function reload() {
   state.db = await store.load();
@@ -196,7 +204,7 @@ root.addEventListener('click', async (e) => {
     if (!s) return;
     // 같은 걸 다시 누르면 지운다
     await store.updateSession({ ...s, condition: s.condition === b.dataset.condition ? null : b.dataset.condition });
-    await reload();
+    await refresh();
     return;
   }
   if (el('[data-gear]')) {
@@ -207,7 +215,7 @@ root.addEventListener('click', async (e) => {
     const on = list.includes(b.dataset.gear);
     const gear = (on ? list.filter((g) => g !== b.dataset.gear) : [...list, b.dataset.gear]).join(',') || null;
     await store.updateSession({ ...s, gear });
-    await reload();
+    await refresh();
     toast(on ? '오리발 표시를 지웠어요' : '오리발 착용으로 표시했어요');
     return;
   }
@@ -263,7 +271,7 @@ root.addEventListener('click', async (e) => {
   if (el('[data-delete]')) {
     if (!confirm('이 기록을 삭제할까요?')) return;
     await store.deleteSessions([el('[data-delete]').dataset.delete]);
-    await reload();
+    await refresh();
     toast('삭제했어요');
     // 그 날 그 종목 기록을 모두 지웠으면 상세 화면에서 나간다
     const r = route();
@@ -277,6 +285,7 @@ root.addEventListener('click', async (e) => {
   if (action === 'settings') go('settings');
   if (action === 'sheet-disconnect') {
     if (!confirm('구글 시트 연결을 끊을까요? 기록은 시트와 이 휴대폰에 그대로 남아요.')) return;
+    await store.settle?.(); // 보내는 중인 변경은 마저 보내고 끊는다
     writeSheetConfig(null);
     store = makeStore();
     await reload();
@@ -306,7 +315,7 @@ root.addEventListener('click', async (e) => {
   if (action === 'clear-demo') {
     if (!confirm('예시 데이터를 모두 지울까요?')) return;
     await store.deleteSessions(demoIds(state.db.sessions));
-    await reload();
+    await refresh();
   }
 });
 
@@ -327,7 +336,7 @@ root.addEventListener('change', (e) => {
       e.target.value = state.db.settings[e.target.name];
       return;
     }
-    store.saveSettings({ [e.target.name]: v }).then(reload).then(() => toast('저장했어요'));
+    store.saveSettings({ [e.target.name]: v }).then(refresh).then(() => toast('저장했어요'));
     return;
   }
   if (e.target.id === 'restore-input' && e.target.files.length) {
@@ -378,7 +387,7 @@ async function saveInline(input) {
   const v = n == null ? null : Math.round(n * Number(input.dataset.scale || 1));
   if (v === (s[input.dataset.inline] ?? null)) return;
   await store.updateSession({ ...s, [input.dataset.inline]: v });
-  await reload();
+  await refresh();
   toast('수정했어요');
 }
 
@@ -428,7 +437,7 @@ root.addEventListener('submit', async (e) => {
       navDepth = 0;
       location.replace('#calendar');
     }
-    await reload();
+    await refresh();
     toast('수정했어요');
     return;
   }
@@ -438,7 +447,7 @@ root.addEventListener('submit', async (e) => {
   state.form = null;
   navDepth = 0;
   location.replace('#calendar');
-  await reload();
+  await refresh();
   toast('저장했어요');
 });
 
@@ -456,7 +465,7 @@ root.addEventListener('submit', async (e) => {
   }
   await store.setLaps(id, laps);
   if (route().name === 'add') goBack();
-  await reload();
+  await refresh();
   toast(`구간 ${laps.length}개를 저장했어요`);
 });
 
@@ -471,7 +480,7 @@ root.addEventListener('submit', async (e) => {
   state.memoEditing = null;
   if ((s.memo ?? '') === memo) return render();
   await store.updateSession({ ...s, memo: memo || null });
-  await reload();
+  await refresh();
   toast(memo ? '메모를 저장했어요' : '메모를 지웠어요');
 });
 
@@ -598,7 +607,7 @@ root.addEventListener('submit', async (e) => {
   state.capture = { phase: 'pick' };
   navDepth = 0;
   location.replace('#calendar');
-  await reload();
+  await refresh();
   toast(`${toSave.length}개 저장했어요`);
 });
 
@@ -624,3 +633,8 @@ async function autoConnect() {
 }
 
 autoConnect().finally(reload);
+
+// 다른 기기에서 고친 기록: 앱으로 돌아올 때 시트와 다시 맞춘다
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && store.status) reload();
+});
