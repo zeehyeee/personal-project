@@ -9,7 +9,7 @@ import { renderCalendar } from './views/calendar.js';
 import { renderDetail } from './views/detail.js';
 import { renderWeekly } from './views/weekly.js';
 import { renderAddChoice, renderManual, syncManualFields } from './views/add.js';
-import { buildManualSession, formFromSession, applyEdit } from './manual.js';
+import { buildManualSession, formFromSession, applyEdit, lapsFromForm } from './manual.js';
 import { findDuplicate } from './duplicate.js';
 import { renderCapture } from './views/capture.js';
 import { renderTrend } from './views/trend.js';
@@ -269,6 +269,10 @@ root.addEventListener('click', async (e) => {
     state.capture = { phase: 'pick' };
     go('add/capture');
   }
+  if (action === 'lap-show-all') {
+    el('[data-action]').closest('details').querySelector('.lap-edits').classList.remove('only-bad');
+    el('[data-action]').remove();
+  }
   if (action === 'capture-again') {
     state.capture = { phase: 'pick' };
     render();
@@ -476,9 +480,23 @@ root.addEventListener('submit', async (e) => {
       return;
     }
     errEl.textContent = '';
+    // 구간 고치기에서 고친 값 (구간 편집이 없는 기록은 읽은 그대로)
+    let sessionLaps = s.laps;
+    if (form.querySelector(`[name="${i}.lap.0.no"]`)) {
+      const r = lapsFromForm(values, String(i), s.session.id);
+      const lapErr = form.querySelector(`[data-error="${i}.laps"]`);
+      if (r.errors.length) {
+        bad = true;
+        lapErr.textContent = r.errors[0];
+        lapErr.closest('details').open = true;
+        return;
+      }
+      lapErr.textContent = '';
+      sessionLaps = r.laps;
+    }
     const { date, start_time, duration_sec, distance_m, kcal, avg_hr } = edited;
     toSave.push({ ...s.session, date, start_time, duration_sec, distance_m, kcal, avg_hr });
-    laps.push(...s.laps);
+    laps.push(...sessionLaps);
   });
   if (bad) return;
   if (!toSave.length) {

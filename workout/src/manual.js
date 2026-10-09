@@ -90,3 +90,26 @@ export function applyEdit(original, edited) {
   }
   return out;
 }
+
+// 캡처 확인 화면의 '구간 고치기' 입력 → swim_laps 행. 시간은 '0:46'·'46'(초) 모두 받는다.
+// 시간·스트로크가 둘 다 빈 행(채우지 않은 빠진 구간)은 저장하지 않는다
+export function lapsFromForm(values, prefix, sessionId) {
+  const laps = [];
+  const errors = [];
+  for (let k = 0; values[`${prefix}.lap.${k}.no`] != null; k++) {
+    const v = (name) => String(values[`${prefix}.lap.${k}.${name}`] ?? '').trim();
+    const lap_no = Number(v('no'));
+    const timeText = v('time'), strokeText = v('strokes');
+    if (!timeText && !strokeText) continue;
+    let time_sec = null;
+    if (timeText) {
+      const m = timeText.match(/^(?:(\d+):)?(\d{1,2})$/);
+      if (!m || (m[1] != null && Number(m[2]) >= 60)) { errors.push(`구간 ${lap_no} 시간을 0:46처럼 적어주세요`); continue; }
+      time_sec = Number(m[1] ?? 0) * 60 + Number(m[2]);
+    }
+    const strokes = strokeText ? Number(strokeText) : null;
+    if (strokes != null && !(Number.isInteger(strokes) && strokes >= 0)) { errors.push(`구간 ${lap_no} 스트로크를 확인해주세요`); continue; }
+    laps.push({ session_id: sessionId, lap_no, stroke: v('stroke') || 'freestyle', time_sec, strokes });
+  }
+  return { laps, errors };
+}

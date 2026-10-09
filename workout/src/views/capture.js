@@ -1,5 +1,6 @@
 // 캡처로 추가: 고르기 → 읽는 중 → 확인
-import { SPORT_META } from '../sports.js';
+import { SPORT_META, STROKE_NAMES } from '../sports.js';
+import { findMissingLaps } from '../swim.js';
 import { formatDuration } from '../format.js';
 import { ICONS, SPORT_ICON, esc, dateLabelFull } from '../ui.js';
 
@@ -78,8 +79,9 @@ function card(s, i) {
       <p class="cap-main">${formatDuration(x.duration_sec)}</p>
       <p class="muted">${facts}</p>
       ${warn ? `<ul class="notes small">${warn}</ul>` : ''}
+      ${lapEditor(s, i)}
       <details ${s.needsDate ? 'open' : ''}>
-        <summary>수정</summary>
+        <summary>날짜·시간·거리 수정</summary>
         <div class="form cap-edit">
           <div class="row2">
             <label class="field"><span class="field-label">날짜</span><span class="field-input">${input('date', x.date, 'type="date"')}</span></label>
@@ -99,4 +101,32 @@ function card(s, i) {
         </div>
       </details>
     </section>`;
+}
+
+// 구간 고치기: 빈 값·빠진 구간이 있으면 펼쳐서 그 줄만 먼저 보여준다 (전체는 '모든 구간 보기')
+const mmss = (t) => (t == null ? '' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`);
+function lapEditor(s, i) {
+  if (s.session.sport !== 'swim' || !s.laps.length) return '';
+  const expected = s.session.swim_laps ?? s.laps[s.laps.length - 1].lap_no;
+  const missingNos = findMissingLaps(s.laps.map((l) => l.lap_no), expected).flatMap(([a, b]) => Array.from({ length: b - a + 1 }, (_, k) => a + k));
+  const rows = [...s.laps, ...missingNos.map((n) => ({ lap_no: n, stroke: 'freestyle', time_sec: null, strokes: null, added: true }))]
+    .sort((a, b) => a.lap_no - b.lap_no);
+  const bad = (l) => l.added || l.time_sec == null || l.strokes == null;
+  const nBad = rows.filter(bad).length;
+  const options = (cur) => Object.entries(STROKE_NAMES).map(([k, n]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${n}</option>`).join('');
+  const row = (l, k) => `
+    <li class="lap-edit ${bad(l) ? 'bad' : 'ok'}">
+      <input type="hidden" name="${i}.lap.${k}.no" value="${l.lap_no}">
+      <span class="le-no">${l.lap_no}</span>
+      <select name="${i}.lap.${k}.stroke">${options(l.stroke)}</select>
+      <span class="field-input le-in"><input name="${i}.lap.${k}.time" value="${mmss(l.time_sec)}" inputmode="numeric" placeholder="0:00"><em>시간</em></span>
+      <span class="field-input le-in"><input name="${i}.lap.${k}.strokes" value="${l.strokes ?? ''}" inputmode="numeric" placeholder="-"><em>회</em></span>
+    </li>`;
+  return `
+    <details class="lap-details" ${nBad ? 'open' : ''}>
+      <summary>구간 고치기${nBad ? ` <em class="le-count">${nBad}개 확인 필요</em>` : ''}</summary>
+      <ul class="lap-edits ${nBad ? 'only-bad' : ''}">${rows.map(row).join('')}</ul>
+      ${nBad ? '<button type="button" class="text-link le-all" data-action="lap-show-all">모든 구간 보기 ›</button>' : ''}
+      <span class="field-error" data-error="${i}.laps"></span>
+    </details>`;
 }

@@ -116,6 +116,13 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
       ...zoneFields(f),
       source: 'capture',
     };
+    if (g.sport === 'swim') {
+      const fix = checkSwimDistance(session, g === lapOwner ? laps : []);
+      if (fix) {
+        session.distance_m = fix.distance;
+        warnings.push(fix.warning);
+      }
+    }
     let sessionLaps = [];
     if (g === lapOwner) {
       sessionLaps = laps.map((l) => ({ session_id: id, ...l }));
@@ -132,18 +139,34 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
 
 const zoneFields = (f) => Object.fromEntries(ZONE_KEYS.map((k) => [k, f[k] ?? null]));
 
+// 수영 거리 확인: 반복 횟수 × 수영장 길이와 크게 다르면 OCR 이 잘못 읽은 것 (예: 675m → 6m)
+export function checkSwimDistance(session, laps = []) {
+  const count = session.swim_laps ?? (laps.length ? laps[laps.length - 1].lap_no : null);
+  if (!count) return null;
+  const pool = session.pool_length_m || 25;
+  const expected = count * pool;
+  const d = session.distance_m;
+  if (d != null && d >= expected * 0.5 && d <= expected * 1.5) return null;
+  return {
+    distance: expected,
+    warning: d == null
+      ? `거리를 찾지 못해 ${count}구간 × ${pool}m = ${expected}m로 넣었어요. 확인해주세요.`
+      : `거리를 ${d}m로 읽었는데 ${count}구간 × ${pool}m(${expected}m)와 달라 ${expected}m로 고쳤어요. 확인해주세요.`,
+  };
+}
+
 function lapWarnings(session, laps) {
   const out = [];
   const expected = session.swim_laps ?? laps[laps.length - 1].lap_no;
   const range = (rs) => rs.map(([a, b]) => (a === b ? `${a}` : `${a}~${b}`)).join(', ');
   const missing = findMissingLaps(laps.map((l) => l.lap_no), expected);
-  if (missing.length) out.push(`구간 ${range(missing)}이 없어요. 구간 화면을 스크롤해서 더 올려주세요.`);
+  if (missing.length) out.push(`구간 ${range(missing)}이 없어요. 구간 화면을 더 올리거나 아래 '구간 고치기'에서 넣어주세요.`);
   const noTime = laps.filter((l) => l.time_sec == null).map((l) => l.lap_no);
   const noStroke = laps.filter((l) => l.strokes == null).map((l) => l.lap_no);
   if (noTime.length === laps.length) out.push('구간 시간 화면이 없어 페이스를 계산할 수 없어요.');
-  else if (noTime.length) out.push(`구간 ${range(toRanges(noTime))}의 시간이 없어요.`);
+  else if (noTime.length) out.push(`구간 ${range(toRanges(noTime))}의 시간이 없어요. 아래 '구간 고치기'에서 바로 넣을 수 있어요.`);
   if (noStroke.length === laps.length) out.push('구간 스트로크 화면이 없어 SWOLF를 계산할 수 없어요.');
-  else if (noStroke.length) out.push(`구간 ${range(toRanges(noStroke))}의 스트로크가 없어요.`);
+  else if (noStroke.length) out.push(`구간 ${range(toRanges(noStroke))}의 스트로크가 없어요. 아래 '구간 고치기'에서 바로 넣을 수 있어요.`);
   const sum = laps.reduce((a, l) => a + (l.strokes ?? 0), 0);
   if (!noStroke.length && !missing.length && session.swim_total_strokes != null && sum !== session.swim_total_strokes) {
     out.push(`구간 스트로크 합(${sum})이 요약의 총 스트로크(${session.swim_total_strokes})와 달라요. 숫자를 확인해주세요.`);

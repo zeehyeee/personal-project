@@ -85,3 +85,29 @@ test('헤더 화면이 상세 화면에 날짜를 붙여준다', () => {
   assert.equal(sessions[0].session.start_time, '21:23');
   assert.equal(sessions[0].needsDate, false);
 });
+
+test('수영 거리: 반복 횟수 × 수영장 길이와 크게 다르면 고치고 알린다 (675m → 6m 오독)', async () => {
+  const { checkSwimDistance } = await import('../src/capture/merge.js');
+  const fix = checkSwimDistance({ distance_m: 6, swim_laps: 27, pool_length_m: 25 });
+  assert.equal(fix.distance, 675);
+  assert.match(fix.warning, /6m로 읽었는데 27구간 × 25m\(675m\)/);
+  assert.equal(checkSwimDistance({ distance_m: 450, swim_laps: 18, pool_length_m: 25 }), null);
+  assert.equal(checkSwimDistance({ distance_m: null, swim_laps: null }, []), null);
+  assert.equal(checkSwimDistance({ distance_m: null, swim_laps: null, pool_length_m: null }, [{ lap_no: 4 }]).distance, 100);
+});
+
+test('구간 고치기 입력 → 구간 행: 0:46·46 모두 초로, 빈 줄은 건너뜀, 잘못 쓰면 오류', async () => {
+  const { lapsFromForm } = await import('../src/manual.js');
+  const v = {
+    '0.lap.0.no': '16', '0.lap.0.stroke': 'freestyle', '0.lap.0.time': '0:46', '0.lap.0.strokes': '5',
+    '0.lap.1.no': '17', '0.lap.1.stroke': 'backstroke', '0.lap.1.time': '52', '0.lap.1.strokes': '',
+    '0.lap.2.no': '18', '0.lap.2.stroke': 'freestyle', '0.lap.2.time': '', '0.lap.2.strokes': '',
+  };
+  const r = lapsFromForm(v, '0', 's');
+  assert.deepEqual(r.errors, []);
+  assert.deepEqual(r.laps, [
+    { session_id: 's', lap_no: 16, stroke: 'freestyle', time_sec: 46, strokes: 5 },
+    { session_id: 's', lap_no: 17, stroke: 'backstroke', time_sec: 52, strokes: null },
+  ]);
+  assert.match(lapsFromForm({ '0.lap.0.no': '3', '0.lap.0.time': '1:75' }, '0', 's').errors[0], /구간 3 시간/);
+});
