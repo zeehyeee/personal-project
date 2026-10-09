@@ -12,12 +12,56 @@
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <title>바다네 체육관</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface.css">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- 글꼴은 화면을 막지 않게 늦게 붙인다 (받는 동안은 기본 글꼴) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface.css" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 앱이 뜨기 전 첫 화면: 흰 화면 대신 배경색 + 아이콘 */
+    html, body { background: #f2f4f6; }
+    .boot { min-height: 100dvh; display: grid; place-items: center; align-content: center; gap: 12px; font: 600 15px -apple-system, system-ui, sans-serif; color: #8b95a1; }
+    .boot img { width: 88px; height: 88px; border-radius: 22px; }
+  </style>
+  <!-- 모듈을 한꺼번에 미리 받는다 (하나씩 이어 받으면 첫 로딩이 느리다). 목록은 test/preload.test.js 가 확인 -->
+  <link rel="modulepreload" href="src/aggregate.js">
+  <link rel="modulepreload" href="src/capture/digits.js">
+  <link rel="modulepreload" href="src/capture/engine-browser.js">
+  <link rel="modulepreload" href="src/capture/extract.js">
+  <link rel="modulepreload" href="src/capture/image.js">
+  <link rel="modulepreload" href="src/capture/merge.js">
+  <link rel="modulepreload" href="src/capture/parse.js">
+  <link rel="modulepreload" href="src/coach.js">
+  <link rel="modulepreload" href="src/dates.js">
+  <link rel="modulepreload" href="src/demo.js">
+  <link rel="modulepreload" href="src/duplicate.js">
+  <link rel="modulepreload" href="src/format.js">
+  <link rel="modulepreload" href="src/goals.js">
+  <link rel="modulepreload" href="src/growth.js">
+  <link rel="modulepreload" href="src/habit.js">
+  <link rel="modulepreload" href="src/home.js">
+  <link rel="modulepreload" href="src/manual.js">
+  <link rel="modulepreload" href="src/mascot.js">
+  <link rel="modulepreload" href="src/records.js">
+  <link rel="modulepreload" href="src/report.js">
+  <link rel="modulepreload" href="src/sports.js">
+  <link rel="modulepreload" href="src/store-sheets.js">
+  <link rel="modulepreload" href="src/store.js">
+  <link rel="modulepreload" href="src/streak.js">
+  <link rel="modulepreload" href="src/swim.js">
+  <link rel="modulepreload" href="src/trend.js">
+  <link rel="modulepreload" href="src/ui.js">
+  <link rel="modulepreload" href="src/views/add.js">
+  <link rel="modulepreload" href="src/views/calendar.js">
+  <link rel="modulepreload" href="src/views/capture.js">
+  <link rel="modulepreload" href="src/views/detail.js">
+  <link rel="modulepreload" href="src/views/lap-editor.js">
+  <link rel="modulepreload" href="src/views/settings.js">
+  <link rel="modulepreload" href="src/views/trend.js">
+  <link rel="modulepreload" href="src/views/weekly.js">
   <script type="module" src="src/app.js"></script>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app"><div class="boot"><img src="icons/icon-192.png" alt="">바다네 체육관</div></div>
 </body>
 </html>

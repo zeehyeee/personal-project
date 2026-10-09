@@ -132,19 +132,25 @@ function render() {
 // 고친 뒤: 휴대폰 사본으로 바로 다시 그린다 (시트로는 뒤에서 보낸다)
 async function refresh() {
   state.db = await (store.snapshot ? store.snapshot() : store.load());
+  shown = JSON.stringify(state.db);
   state.sync = store.status ? { ...store.status, connected: true } : { connected: false };
   state.days = groupByDay(state.db.sessions, groupLapsBySession(state.db.laps), state.db.settings);
   render();
 }
 
 let warnedOffline = false;
+let shown = null; // 마지막으로 그린 기록 (시트에서 받아도 바뀐 게 없으면 다시 그리지 않는다)
 async function reload() {
-  state.db = await store.load();
+  const db = await store.load();
   state.sync = store.status ? { ...store.status, connected: true } : { connected: false };
   if (store.status?.online === false && !warnedOffline) {
     warnedOffline = true;
     setTimeout(() => toast('시트에 연결하지 못해 휴대폰에 저장된 기록을 보여드려요'), 0);
   }
+  const key = JSON.stringify(db);
+  if (key === shown && route().name !== 'settings') return; // 입력 중인 화면을 괜히 다시 그리지 않게
+  shown = key;
+  state.db = db;
   state.days = groupByDay(state.db.sessions, groupLapsBySession(state.db.laps), state.db.settings);
   render();
 }
@@ -632,7 +638,11 @@ async function autoConnect() {
   }
 }
 
-autoConnect().finally(reload);
+// 앱을 열면 휴대폰 사본으로 바로 그리고, 시트와 맞추는 건 뒤에서 (전에는 시트 응답을 기다려 3~4초 흰 화면)
+refresh().finally(() => autoConnect().finally(reload));
+
+// 앱 파일을 휴대폰에 저장해 두고 바로 연다 (새 버전은 뒤에서 받아 다음에 열 때 적용)
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
 // 다른 기기에서 고친 기록: 앱으로 돌아올 때 시트와 다시 맞춘다
 document.addEventListener('visibilitychange', () => {
