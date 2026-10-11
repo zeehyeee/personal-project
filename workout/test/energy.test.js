@@ -6,20 +6,21 @@ import { groupByDay, groupLapsBySession } from '../src/aggregate.js';
 import { demoData } from '../src/demo.js';
 import { DEFAULT_SETTINGS } from '../src/sports.js';
 
-test('수영 물속 시간: 휴식이 섞인 구간은 평소 구간 시간으로, 빠진 구간도 채워 센다', () => {
-  const laps = flagRestLaps([50, 52, 48, 400, 50].map((t, i) => ({ lap_no: i + 1, time_sec: t })), 2);
-  // 50+52+48+50(400→중앙값 50)+50 = 250, 총 6구간이라 1구간(50) 더
-  assert.equal(swimActiveSec({ swim_laps: 6, duration_sec: 3000 }, laps), 300);
+test('수영 운동 시간: 출발 전·끝난 뒤 대기만 빼고 중간 휴식은 둔다', () => {
+  // 첫 구간 400초(평소 50초 → 출발 전 대기 350초), 중간 휴식 구간 300초는 그대로, 구간 합 850초, 기록 1500초 → 끝난 뒤 650초
+  const laps = flagRestLaps([400, 50, 52, 300, 48].map((t, i) => ({ lap_no: i + 1, time_sec: t })), 2);
+  assert.equal(swimActiveSec({ swim_laps: 5, duration_sec: 1500 }, laps), 1500 - 650 - 350);
   assert.equal(swimActiveSec({ duration_sec: 3000 }, []), null);
-  // 기록된 시간보다 길어지지 않게
-  assert.equal(swimActiveSec({ swim_laps: 100, duration_sec: 200 }, laps), 200);
+  // 빠진 구간은 평소 구간 시간으로 채워 '끝난 뒤'를 덜 뺀다
+  assert.equal(swimActiveSec({ swim_laps: 7, duration_sec: 1500 }, laps), 1500 - (1500 - 950) - 350);
 });
 
-test('하루 합산: 수영은 물속 시간, 전체 시간은 따로 (실제 10/6: 66분 중)', () => {
+test('하루 합산: 실제 10/6 — 66분 중 출발 전 약 9분·끝난 뒤 약 21분을 빼고 약 37분', () => {
   const { sessions, laps } = demoData();
   const d = groupByDay(sessions, groupLapsBySession(laps))['2026-10-06'].swim;
   assert.equal(d.total_sec, 3983);
-  assert.ok(d.duration_sec > 600 && d.duration_sec < 1500, d.duration_sec);
+  // 구간 합 2750초 → 끝난 뒤 1233초, 첫 구간 564초 − 평소 약 49초 → 출발 전 약 515초
+  assert.ok(Math.abs(d.duration_sec - (3983 - 1233 - 515)) <= 1, d.duration_sec);
 });
 
 test('칼로리: 몸무게가 있으면 MET × kg × 시간, 없으면 삼성헬스 값', () => {

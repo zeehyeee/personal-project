@@ -1,6 +1,5 @@
 // 실제 운동 시간과 칼로리 다시 계산
-// - 수영: 삼성헬스 운동 시간에는 벽에서 쉰 시간·끝내고 멈춘 시간이 들어간다.
-//   구간 기록으로 '물속에서 수영한 시간'만 다시 센다 (휴식이 섞인 구간은 평소 구간 시간으로 바꿔 센다)
+// - 수영: 삼성헬스 운동 시간에는 출발 전·끝난 뒤 멈춤 버튼까지의 대기가 들어간다. 구간 기록으로 앞뒤 대기만 뺀다
 // - 칼로리: 몸무게를 넣으면 MET × 몸무게(kg) × 운동 시간(시간)으로 다시 계산한다 (삼성헬스 값이 너무 크게 나와서)
 
 function median(values) {
@@ -9,16 +8,21 @@ function median(values) {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
-// flaggedLaps: flagRestLaps 결과 (rest 표시). 구간이 없으면 null (알 수 없음 → 기존 시간 그대로)
+// 수영 운동 시간: 앞뒤 대기만 뺀다 (중간에 벽에서 쉰 시간은 달리기·걷기처럼 운동 시간에 둔다)
+// - 시작 전: 첫 구간에는 시작 버튼을 누르고 출발하기까지 기다린 시간이 들어간다 → 평소 구간 시간을 넘는 만큼
+// - 끝난 뒤: 마지막 구간 이후 멈춤 버튼까지의 시간 = 기록된 시간 − 구간 시간 합 (빠진 구간은 평소 구간 시간으로)
+// flaggedLaps: flagRestLaps 결과. 구간이 없으면 null (알 수 없음 → 기록된 시간 그대로)
 export function swimActiveSec(session, flaggedLaps) {
+  const total = Number(session.duration_sec) || 0;
   const times = flaggedLaps.filter((l) => l.time_sec != null && !l.rest).map((l) => l.time_sec);
-  if (!times.length) return null;
+  if (!times.length || !total) return null;
   const typical = median(times);
-  let sec = flaggedLaps.reduce((a, l) => a + (l.rest || l.time_sec == null ? typical : l.time_sec), 0);
-  // 구간 화면을 다 못 올린 경우: 빠진 구간은 평소 구간 시간으로
-  const missing = (Number(session.swim_laps) || 0) - flaggedLaps.length;
-  if (missing > 0) sec += missing * typical;
-  return Math.round(Math.min(sec, Number(session.duration_sec) || sec));
+  const missing = Math.max(0, (Number(session.swim_laps) || 0) - flaggedLaps.length);
+  const lapSum = flaggedLaps.reduce((a, l) => a + (l.time_sec ?? typical), 0) + missing * typical;
+  const after = Math.max(0, total - lapSum);
+  const first = [...flaggedLaps].sort((x, y) => x.lap_no - y.lap_no)[0];
+  const before = first?.rest ? first.time_sec - typical : 0;
+  return Math.round(Math.max(typical, total - after - before));
 }
 
 // 운동 강도(MET). 속도가 있으면 속도로, 없으면 종목 기본값

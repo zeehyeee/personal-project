@@ -127,9 +127,9 @@ export function renderDetail(state, date, sport) {
       ${badges}
       <section class="card">
         <div class="primary">
-          <span class="m-label">운동 시간${day.sport === 'swim' && day.total_sec - day.duration_sec >= 60 ? ' (쉬는 시간 빼고)' : ''}</span>
+          <span class="m-label">운동 시간${day.sport === 'swim' && day.total_sec - day.duration_sec >= 60 ? ' (앞뒤 대기 빼고)' : ''}</span>
           <span class="primary-value">${formatDuration(day.duration_sec)}</span>
-          ${day.sport === 'swim' && day.total_sec - day.duration_sec >= 60 ? `<span class="primary-sub">수영장에 있던 시간 ${formatDuration(day.total_sec)} · 쉰 시간 ${formatDuration(day.total_sec - day.duration_sec)}</span>` : ''}
+          ${day.sport === 'swim' && day.total_sec - day.duration_sec >= 60 ? `<span class="primary-sub">삼성헬스 기록 ${formatDuration(day.total_sec)} · 출발 전·끝난 뒤 ${formatDuration(day.total_sec - day.duration_sec)}</span>` : ''}
         </div>
         <div class="secondary">${second.join('')}</div>
         <ul class="sub">${third.join('')}</ul>
