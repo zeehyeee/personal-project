@@ -29,6 +29,7 @@ export const ZONE_META = {
 // settings 시트 기본값. 목표치는 임시값이며 설정 화면에서 바꾼다.
 export const DEFAULT_SETTINGS = {
   pool_length_m: 25,
+  weight_kg: '', // 비우면 삼성헬스 칼로리 그대로
   swim_rest_multiplier: 2,
   weekly_active_days_goal: 5,
   weekly_minutes_goal: 150,

@@ -8,12 +8,13 @@ const demo = demoData();
 const days = groupByDay(demo.sessions, groupLapsBySession(demo.laps));
 const today = '2026-10-08';
 
-test('10월 2주차(10/4~10/10): 수영 비중, 통계, 종목별', () => {
+test('10월 2주차(10/4~10/10): 수영은 물속 시간만이라 걷기 비중, 통계, 종목별', () => {
   const r = weeklyReport(days, '2026-10-04', today);
   assert.equal(r.label.week, 2);
-  assert.equal(r.headline, '수영 비중이 높았던 한 주');
+  // 10/6 수영은 수영장 66분 중 물속에서 수영한 시간(약 16분)만 센다 → 걷기 25분이 가장 길다
+  assert.equal(r.headline, '걷기 비중이 높았던 한 주');
   assert.equal(r.stats[1].value, '1/7일');
-  assert.equal(r.sports.map((s) => s.sport).join(), 'swim,walk,bike');
+  assert.equal(r.sports.map((s) => s.sport).join(), 'walk,swim,bike');
   assert.equal(r.strip.find((d) => d.date === '2026-10-06').level, 'some');
   // 직전 4주에 10/2 달리기 하루 → 평소 활동일 0.25
   assert.equal(r.stats[1].diffLabel, '평소보다 +0.8일');
@@ -27,8 +28,8 @@ test('평소 기록이 없으면 안내', () => {
 test('습관 지수: 6주, 이번 주 점수', () => {
   const r = weeklyReport(days, '2026-10-04', today);
   assert.equal(r.habit.length, 6);
-  // 1일/5일×50 + 3종목/4×20 + (66+25+12분=103분)/150×30
-  const mins = (3983 + 1526 + 706) / 60;
+  // 1일/5일×50 + 3종목/4×20 + (수영 물속 시간 + 걷기 25분 + 자전거 12분)/150×30
+  const mins = (days['2026-10-06'].swim.duration_sec + 1526 + 706) / 60;
   assert.equal(r.score, Math.round(0.2 * 50 + 0.75 * 20 + (mins / 150) * 30));
   assert.equal(weekHabit(days, '2026-09-27'), r.habit[4].score);
 });

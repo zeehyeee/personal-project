@@ -602,3 +602,4 @@ input, select, textarea { font-size: max(16px, 1em); }
 /* 막대 그래프 날짜: 막대가 있든 없든 같은 줄에 (막대 아래 28px 칸에 고정) */
 .tbar { position: relative; padding-bottom: 28px; gap: 0; }
 .tbar-label { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); }
+.primary-sub { margin-top: 4px; font-size: var(--t7); color: var(--grey-500); }

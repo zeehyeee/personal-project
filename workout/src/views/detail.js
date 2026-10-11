@@ -20,6 +20,12 @@ const inl = (id, field, raw, { scale = 1, decimals = 0 } = {}) => {
   return `<input class="inl" data-inline="${field}" data-session="${esc(id)}" data-scale="${scale}" inputmode="decimal" value="${v}" placeholder="-" style="width:${Math.max(2, v.length) + 0.6}ch" aria-label="${field}">`;
 };
 
+// 칼로리: 몸무게가 있으면 다시 계산한 값 (삼성헬스 값은 아래 작은 줄에), 없으면 삼성헬스 값을 바로 고칠 수 있게
+const kcalMetric = (day, id) => (day.kcal_estimated
+  ? metric('예상 칼로리', int(day.kcal), 'kcal')
+  : metric('칼로리', int(day.kcal), 'kcal', inl(id, 'kcal', day.kcal || null)));
+const deviceKcal = (day) => (day.kcal_estimated && day.kcal_device ? [sub('삼성헬스 칼로리', `${int(day.kcal_device)} kcal`)] : []);
+
 function levels(day, id) {
   const pace = (v) => (v == null ? '-' : formatPace(v));
   switch (day.sport) {
@@ -28,7 +34,7 @@ function levels(day, id) {
       return {
         second: [
           metric('거리', int(day.distance_m), 'm', inl(id, 'distance_m', day.distance_m || null)),
-          metric('칼로리', int(day.kcal), 'kcal', inl(id, 'kcal', day.kcal || null)),
+          kcalMetric(day, id),
           metric('총 반복횟수', int(day.swim.laps), '회', inl(id, 'swim_laps', day.swim.laps || null)),
         ],
         third: [
@@ -36,6 +42,7 @@ function levels(day, id) {
           sub('평균 SWOLF (휴식 제외)', ls ? dec1(ls.avgSwolf) : '-'),
           sub('평균 심박수', id ? ' bpm' : day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`, inl(id, 'avg_hr', day.avg_hr)),
           sub('수영장 길이', id ? 'm' : day.swim.pools.map((p) => `${p}m`).join(' · '), inl(id, 'pool_length_m', day.swim.pools[0])),
+          ...deviceKcal(day),
         ],
       };
     }
@@ -43,21 +50,22 @@ function levels(day, id) {
       return {
         second: [
           metric('거리', km(day.distance_m), 'km', inl(id, 'distance_m', day.distance_m || null, { scale: 1000, decimals: 2 })),
-          metric('칼로리', int(day.kcal), 'kcal', inl(id, 'kcal', day.kcal || null)),
+          kcalMetric(day, id),
           metric('평균 속도', dec1(day.speed_kmh), 'km/h'),
         ],
-        third: [sub('평균 심박수', id ? ' bpm' : day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`, inl(id, 'avg_hr', day.avg_hr))],
+        third: [sub('평균 심박수', id ? ' bpm' : day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`, inl(id, 'avg_hr', day.avg_hr)), ...deviceKcal(day)],
       };
     default: // run, walk
       return {
         second: [
           metric('거리', km(day.distance_m), 'km', inl(id, 'distance_m', day.distance_m || null, { scale: 1000, decimals: 2 })),
-          metric('칼로리', int(day.kcal), 'kcal', inl(id, 'kcal', day.kcal || null)),
+          kcalMetric(day, id),
           metric('평균 페이스', pace(day.pace_sec_per_km), '/km'),
         ],
         third: [
           sub('평균 심박수', id ? ' bpm' : day.avg_hr == null ? '-' : `${int(day.avg_hr)} bpm`, inl(id, 'avg_hr', day.avg_hr)),
           ...(day.sport === 'run' ? [sub('평균 케이던스', id ? ' spm' : day.avg_cadence == null ? '-' : `${int(day.avg_cadence)} spm`, inl(id, 'avg_cadence', day.avg_cadence))] : []),
+          ...deviceKcal(day),
         ],
       };
   }
@@ -119,8 +127,9 @@ export function renderDetail(state, date, sport) {
       ${badges}
       <section class="card">
         <div class="primary">
-          <span class="m-label">운동 시간</span>
+          <span class="m-label">운동 시간${day.sport === 'swim' && day.total_sec - day.duration_sec >= 60 ? ' (쉬는 시간 빼고)' : ''}</span>
           <span class="primary-value">${formatDuration(day.duration_sec)}</span>
+          ${day.sport === 'swim' && day.total_sec - day.duration_sec >= 60 ? `<span class="primary-sub">수영장에 있던 시간 ${formatDuration(day.total_sec)} · 쉰 시간 ${formatDuration(day.total_sec - day.duration_sec)}</span>` : ''}
         </div>
         <div class="secondary">${second.join('')}</div>
         <ul class="sub">${third.join('')}</ul>

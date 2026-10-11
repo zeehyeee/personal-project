@@ -6,6 +6,7 @@ import { DEFAULT_SHEET_URL } from '../store-sheets.js';
 
 // 설정 항목: [키, 이름, 단위, 최소, 최대, 소수 허용]
 export const SETTING_FIELDS = {
+  weight_kg: ['몸무게', 'kg', 25, 250, true],
   weekly_active_days_goal: ['주 운동일 목표', '일', 1, 7],
   weekly_minutes_goal: ['주 운동 시간 목표', '분', 10, 2000],
   pool_length_m: ['기본 수영장 길이', 'm', 5, 100, true],
@@ -14,9 +15,13 @@ export const SETTING_FIELDS = {
 };
 
 // 입력값 → 저장할 값 (범위를 벗어나면 null)
+// 비워 두면 되는 항목 (몸무게: 비우면 삼성헬스 칼로리 그대로)
+const OPTIONAL = ['weight_kg'];
+
 export function parseSetting(key, raw) {
   const f = SETTING_FIELDS[key];
   if (!f) return null;
+  if (OPTIONAL.includes(key) && String(raw).trim() === '') return '';
   const n = Number(String(raw).trim());
   if (!Number.isFinite(n) || n < f[2] || n > f[3]) return null;
   return f[4] ? Math.round(n * 10) / 10 : Math.round(n);
@@ -79,6 +84,11 @@ export function renderSettings(state) {
         <h2>종목별 월 목표 횟수</h2>
         <p class="muted">추이 탭에서 이번 달 몇 번 했는지 보여줘요. 0이면 표시하지 않아요.</p>
         ${SPORTS.map((s) => row(state, `monthly_count_goal_${s}`)).join('')}
+      </section>
+      <section class="card set-card">
+        <h2>칼로리 계산</h2>
+        <p class="muted">삼성헬스 칼로리가 크게 나와서, 몸무게를 넣으면 운동 강도(MET) × 몸무게 × 실제 운동 시간으로 다시 계산해요. 수영은 쉬는 시간을 뺀 물속 시간으로 계산해요. 비우면 삼성헬스 값을 그대로 써요.</p>
+        ${row(state, 'weight_kg')}
       </section>
       <section class="card set-card">
         <h2>수영</h2>

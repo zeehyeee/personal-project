@@ -1,5 +1,6 @@
 // 세션 → 일 단위 합산 (명세 4-1)
 import { flagRestLaps, swimLapStats } from './swim.js';
+import { swimActiveSec, estimateKcal } from './energy.js';
 import { DEFAULT_SETTINGS, ZONE_KEYS } from './sports.js';
 
 export const hasGear = (s, g) => String(s.gear ?? '').split(',').includes(g);
@@ -23,10 +24,23 @@ function weightedAvg(sessions, key) {
 // lapsBySession: session_id → swim_laps 행 배열 (수영만)
 export function aggregateSessions(sessions, lapsBySession = {}, settings = DEFAULT_SETTINGS) {
   const first = sessions[0];
-  const duration = sum(sessions, 'duration_sec');
+  const isSwim = first.sport === 'swim';
+  const pool = Number(settings.pool_length_m) || 25;
+  const mult = Number(settings.swim_rest_multiplier) || 2;
+  // 수영: 휴식 판정은 세션별 중앙값으로. 구간에 그 세션의 수영장 길이를 붙인다 (어린이풀 등)
+  const perSession = isSwim ? sessions.map((s) => flagRestLaps(lapsBySession[s.id] ?? [], mult)
+    .map((l) => ({ ...l, pool_m: Number(s.pool_length_m) || pool }))) : [];
+  // 실제 운동 시간: 수영은 구간으로 다시 센 '물속 시간', 나머지는 기록 그대로
+  const active = sessions.map((s, i) => (isSwim ? swimActiveSec(s, perSession[i]) : null) ?? (Number(s.duration_sec) || 0));
+  const actOf = (s) => active[sessions.indexOf(s)];
+  const sumAct = (rows) => rows.reduce((a, s) => a + actOf(s), 0);
+  const duration = sumAct(sessions);
+  // 칼로리: 몸무게가 있으면 다시 계산, 없으면 삼성헬스 값
+  const weight = Number(settings.weight_kg) || 0;
+  const kcalEst = weight > 0 ? sessions.reduce((a, s) => a + (estimateKcal(s.sport, Number(s.distance_m) || 0, actOf(s), weight) ?? 0), 0) : null;
   // 페이스·속도는 거리가 있는 세션끼리만 시간 ÷ 거리로 다시 계산한다.
   const withDist = sessions.filter((s) => Number(s.distance_m) > 0);
-  const distTime = sum(withDist, 'duration_sec');
+  const distTime = sumAct(withDist);
   const distM = sum(withDist, 'distance_m');
 
   const result = {
@@ -37,8 +51,12 @@ export function aggregateSessions(sessions, lapsBySession = {}, settings = DEFAU
     // 오리발을 낀 세션이 하나라도 있으면 그날 수영은 페이스·SWOLF 비교에서 뺀다
     fins: sessions.some((s) => hasGear(s, 'fins')),
     duration_sec: duration,
+    // 삼성헬스가 잰 전체 시간 (수영은 쉬는 시간 포함)
+    total_sec: sum(sessions, 'duration_sec'),
     distance_m: sum(sessions, 'distance_m'),
-    kcal: sum(sessions, 'kcal'),
+    kcal: kcalEst ?? sum(sessions, 'kcal'),
+    kcal_device: sum(sessions, 'kcal'),
+    kcal_estimated: kcalEst != null,
     pace_sec_per_km: distM ? distTime / (distM / 1000) : null,
     speed_kmh: distTime ? distM / 1000 / (distTime / 3600) : null,
     avg_hr: weightedAvg(sessions, 'avg_hr'),
@@ -46,19 +64,14 @@ export function aggregateSessions(sessions, lapsBySession = {}, settings = DEFAU
     // 운동 강도(분): 값이 있는 세션만 더한다. 하나도 없으면 null
     ...Object.fromEntries(ZONE_KEYS.map((k) => [k, sessions.some((s) => has(s[k])) ? sum(sessions, k) : null])),
     // 강도 기록이 있는 세션만의 운동 시간·개수 (강도 비율의 기준)
-    zone_duration_sec: sum(sessions.filter((s) => ZONE_KEYS.some((k) => has(s[k]))), 'duration_sec'),
+    zone_duration_sec: sumAct(sessions.filter((s) => ZONE_KEYS.some((k) => has(s[k])))),
     zone_sessions: sessions.filter((s) => ZONE_KEYS.some((k) => has(s[k]))).length,
     // 한 번에 가장 오래 한 세션 (멈추면 삼성헬스가 세션을 나눈다 → '쉬지 않고 N분')
-    longest_session_sec: Math.max(...sessions.map((s) => Number(s.duration_sec) || 0)),
+    longest_session_sec: Math.max(...active),
   };
 
-  if (first.sport === 'swim') {
-    const pool = Number(settings.pool_length_m) || 25;
-    const mult = Number(settings.swim_rest_multiplier) || 2;
-    // 휴식 판정은 세션별 중앙값으로 하고, 요약은 그날 구간 전체로 다시 계산한다.
-    // 구간에 그 세션의 수영장 길이를 붙인다 (어린이풀 등 세션마다 다를 수 있다)
-    const perSession = sessions.map((s) => flagRestLaps(lapsBySession[s.id] ?? [], mult)
-      .map((l) => ({ ...l, pool_m: Number(s.pool_length_m) || pool })));
+  if (isSwim) {
+    // 요약은 그날 구간 전체로 다시 계산한다
     const laps = perSession.flat();
     result.swim = {
       laps: sum(sessions, 'swim_laps'),

@@ -116,3 +116,11 @@ test('설정 값 검증', async () => {
   assert.equal(parseSetting('swim_rest_multiplier', '2.25'), 2.3);
   assert.equal(parseSetting('monthly_count_goal_swim', 'abc'), null);
 });
+
+test('설정: 몸무게는 비워 둘 수 있고, 범위를 벗어나면 거절', async () => {
+  const { parseSetting } = await import('../src/views/settings.js');
+  assert.equal(parseSetting('weight_kg', ''), '');
+  assert.equal(parseSetting('weight_kg', '55.5'), 55.5);
+  assert.equal(parseSetting('weight_kg', '10'), null);
+  assert.equal(parseSetting('weekly_active_days_goal', ''), null);
+});
