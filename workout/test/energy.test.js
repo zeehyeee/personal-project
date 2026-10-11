@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { swimActiveSec, metOf, estimateKcal } from '../src/energy.js';
+import { swimActiveSec, swimMovingSec, metOf, estimateKcal, estimateSwimKcal, REST_MET } from '../src/energy.js';
 import { flagRestLaps } from '../src/swim.js';
 import { groupByDay, groupLapsBySession } from '../src/aggregate.js';
 import { demoData } from '../src/demo.js';
@@ -36,4 +36,21 @@ test('칼로리: 몸무게가 있으면 MET × kg × 시간, 없으면 삼성헬
   assert.ok(est.kcal > 150 && est.kcal < 200, est.kcal);
   // 수영 느린 자유형(분당 20m 미만)은 5.8 MET
   assert.equal(metOf('swim', 625, 2400), 5.8);
+});
+
+test('수영 칼로리: 헤엄친 시간은 수영 MET, 중간 휴식은 쉬는 MET, 앞뒤 대기는 0', () => {
+  const laps = flagRestLaps([400, 50, 52, 300, 48].map((t, i) => ({ lap_no: i + 1, time_sec: t })), 2);
+  const session = { swim_laps: 5, duration_sec: 1500 };
+  const active = swimActiveSec(session, laps); // 500 (앞뒤 대기 뺌)
+  const moving = swimMovingSec(session, laps); // 50+50+52+50+48 = 250
+  assert.equal(moving, 250);
+  const kcal = estimateSwimKcal(125, active, moving, 60);
+  assert.equal(kcal, Math.round((metOf('swim', 125, 250) * 250 + REST_MET * 250) * 60 / 3600));
+  // 구간이 없으면 운동 시간 전체를 수영 MET 로
+  assert.equal(estimateSwimKcal(500, 1800, null, 60), estimateKcal('swim', 500, 1800, 60));
+  // 하루 합산에서도 같은 식 (시간은 앞뒤 대기만 뺀 값)
+  const { sessions, laps: demoLaps } = demoData();
+  const d = groupByDay(sessions, groupLapsBySession(demoLaps), { ...DEFAULT_SETTINGS, weight_kg: 55 })['2026-10-06'].swim;
+  assert.ok(d.duration_sec > 2200 && d.duration_sec < 2260);
+  assert.ok(d.kcal > 0 && d.kcal < d.kcal_device, d.kcal);
 });

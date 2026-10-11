@@ -25,6 +25,26 @@ export function swimActiveSec(session, flaggedLaps) {
   return Math.round(Math.max(typical, total - after - before));
 }
 
+// 실제로 헤엄친 시간: 중간에 쉰 시간도 뺀다 (칼로리 계산용). 휴식이 섞인 구간은 평소 구간 시간으로 센다
+export function swimMovingSec(session, flaggedLaps) {
+  const times = flaggedLaps.filter((l) => l.time_sec != null && !l.rest).map((l) => l.time_sec);
+  if (!times.length) return null;
+  const typical = median(times);
+  const missing = Math.max(0, (Number(session.swim_laps) || 0) - flaggedLaps.length);
+  const sec = flaggedLaps.reduce((a, l) => a + (l.rest || l.time_sec == null ? typical : l.time_sec), 0) + missing * typical;
+  return Math.round(Math.min(sec, Number(session.duration_sec) || sec));
+}
+
+// 수영 칼로리: 헤엄친 시간은 속도별 수영 MET, 중간에 쉰 시간은 물속에 서 있는 정도(2.0 MET)로.
+// 출발 전·끝난 뒤 대기는 넣지 않는다. 구간이 없으면 운동 시간 전체를 수영 MET 로
+export const REST_MET = 2.0;
+export function estimateSwimKcal(distanceM, activeSec, movingSec, weightKg) {
+  if (!(weightKg > 0) || !(activeSec > 0)) return null;
+  if (movingSec == null) return estimateKcal('swim', distanceM, activeSec, weightKg);
+  const restSec = Math.max(0, activeSec - movingSec);
+  return Math.round((metOf('swim', distanceM, movingSec) * movingSec + REST_MET * restSec) * weightKg / 3600);
+}
+
 // 운동 강도(MET). 속도가 있으면 속도로, 없으면 종목 기본값
 // 걷기·달리기: ACSM 산소 소비 공식, 자전거·수영: 신체활동 MET 표(Compendium) 구간
 export function metOf(sport, distanceM, activeSec) {

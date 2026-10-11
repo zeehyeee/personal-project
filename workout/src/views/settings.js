@@ -87,7 +87,7 @@ export function renderSettings(state) {
       </section>
       <section class="card set-card">
         <h2>칼로리 계산</h2>
-        <p class="muted">삼성헬스 칼로리가 크게 나와서, 몸무게를 넣으면 운동 강도(MET) × 몸무게 × 실제 운동 시간으로 다시 계산해요. 수영은 출발 전·끝난 뒤 대기를 뺀 시간으로 계산해요. 비우면 삼성헬스 값을 그대로 써요.</p>
+        <p class="muted">삼성헬스 칼로리가 크게 나와서, 몸무게를 넣으면 운동 강도(MET) × 몸무게 × 실제 운동 시간으로 다시 계산해요. 수영은 실제로 헤엄친 시간은 수영 강도로, 중간에 쉰 시간은 가벼운 강도로 계산하고, 출발 전·끝난 뒤 대기는 넣지 않아요. 비우면 삼성헬스 값을 그대로 써요.</p>
         ${row(state, 'weight_kg')}
       </section>
       <section class="card set-card">

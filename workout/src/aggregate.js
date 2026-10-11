@@ -1,6 +1,6 @@
 // 세션 → 일 단위 합산 (명세 4-1)
 import { flagRestLaps, swimLapStats } from './swim.js';
-import { swimActiveSec, estimateKcal } from './energy.js';
+import { swimActiveSec, swimMovingSec, estimateKcal, estimateSwimKcal } from './energy.js';
 import { DEFAULT_SETTINGS, ZONE_KEYS } from './sports.js';
 
 export const hasGear = (s, g) => String(s.gear ?? '').split(',').includes(g);
@@ -37,7 +37,11 @@ export function aggregateSessions(sessions, lapsBySession = {}, settings = DEFAU
   const duration = sumAct(sessions);
   // 칼로리: 몸무게가 있으면 다시 계산, 없으면 삼성헬스 값
   const weight = Number(settings.weight_kg) || 0;
-  const kcalEst = weight > 0 ? sessions.reduce((a, s) => a + (estimateKcal(s.sport, Number(s.distance_m) || 0, actOf(s), weight) ?? 0), 0) : null;
+  // 수영은 헤엄친 시간(수영 MET) + 중간에 쉰 시간(쉬는 MET)으로 따로 계산한다
+  const kcalOf = (s, i) => (isSwim
+    ? estimateSwimKcal(Number(s.distance_m) || 0, active[i], swimMovingSec(s, perSession[i]), weight)
+    : estimateKcal(s.sport, Number(s.distance_m) || 0, active[i], weight));
+  const kcalEst = weight > 0 ? sessions.reduce((a, s, i) => a + (kcalOf(s, i) ?? 0), 0) : null;
   // 페이스·속도는 거리가 있는 세션끼리만 시간 ÷ 거리로 다시 계산한다.
   const withDist = sessions.filter((s) => Number(s.distance_m) > 0);
   const distTime = sumAct(withDist);
