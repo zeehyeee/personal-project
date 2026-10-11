@@ -470,6 +470,13 @@ root.addEventListener('submit', async (e) => {
     return;
   }
   await store.setLaps(id, laps);
+  // 반복 횟수·거리가 비어 있던 수영이면 구간으로 채운다 (예: 하루 두 번 수영에서 한쪽 요약을 못 읽은 경우)
+  const s = state.db.sessions.find((x) => x.id === id);
+  if (s && laps.length && (s.swim_laps == null || !s.distance_m)) {
+    const n = Math.max(...laps.map((l) => l.lap_no));
+    const pool = Number(s.pool_length_m) || Number(state.db.settings.pool_length_m) || 25;
+    await store.updateSession({ ...s, swim_laps: s.swim_laps ?? n, distance_m: s.distance_m || n * pool, pool_length_m: s.pool_length_m ?? pool });
+  }
   if (route().name === 'add') goBack();
   await refresh();
   toast(`구간 ${laps.length}개를 저장했어요`);

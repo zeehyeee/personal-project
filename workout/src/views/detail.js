@@ -184,7 +184,6 @@ function lapSection(state, day) {
 // 구간 채우기·고치기: 구간이 없으면 캡처로 채우거나 직접 입력, 있으면 접어 둔 고치기
 function lapEditCard(s, laps, many) {
   const rows = lapRows(laps, s.swim_laps);
-  if (!rows.length) return '';
   const empty = !laps.length;
   const form = `
     <form class="lap-form" data-lap-session="${esc(s.id)}" novalidate>
@@ -198,9 +197,9 @@ function lapEditCard(s, laps, many) {
     return `
     <section class="card">
       <h2>구간 기록${when}</h2>
-      <p class="muted">${s.swim_laps}구간 기록이 없어요. 삼성헬스 구간 화면(시간·스트로크)을 올리면 채워져요.</p>
+      <p class="muted">${s.swim_laps ? `${s.swim_laps}구간 기록이 없어요.` : '구간 기록이 없어요.'} 삼성헬스 구간 화면(시간·스트로크)을 올리면 채워져요.</p>
       ${pick}
-      <details class="lap-details"><summary>직접 입력</summary>${form}</details>
+      ${rows.length ? `<details class="lap-details"><summary>직접 입력</summary>${form}</details>` : ''}
     </section>`;
   }
   return `

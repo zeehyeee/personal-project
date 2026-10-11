@@ -136,3 +136,27 @@ test('칼로리가 운동 시간에 비해 너무 크면(92163kcal/25분) 확인
   const ok = mergeCaptures([{ kind: 'detail', sport: 'swim', duration_sec: 5146, distance_m: 775, kcal: 1041 }], { today: '2026-10-09', newId: () => 'x' });
   assert.equal(ok.sessions[0].needsEdit, false);
 });
+
+test('하루 두 번 수영: 구간 화면을 수영별로 나눠 각각 붙인다 (21구간·25구간)', () => {
+  const run = (n, metric, base) => ({ kind: 'laps', sport: 'swim', metric, rows: Array.from({ length: n }, (_, i) => ({ lap_no: i + 1, stroke: 'freestyle', value: base + i })) });
+  const items = [
+    { kind: 'daily', sport: 'swim', date: { month: 10, day: 11, weekday: '일' }, rows: [
+      { sport: 'swim', start_time: '16:07', duration_sec: 2573, kcal: 489 },
+      { sport: 'swim', start_time: '17:01', duration_sec: 4410, kcal: 615 },
+    ] },
+    { kind: 'detail', sport: 'swim', duration_sec: 4410, distance_m: 625, swim_laps: 25, pool_length_m: 25 },
+    // 첫 수영(21구간) 시간·스트로크 → 둘째 수영(25구간) 시간·스트로크
+    run(21, 'time', 40), run(21, 'strokes', 5),
+    run(25, 'time', 60), run(25, 'strokes', 7),
+  ];
+  const r = mergeCaptures(items, { today: '2026-10-11', newId: (() => { let n = 0; return () => `s${++n}`; })() });
+  const by = Object.fromEntries(r.sessions.map((s) => [s.session.start_time, s]));
+  assert.equal(by['16:07'].laps.length, 21);
+  assert.equal(by['16:07'].laps[0].time_sec, 40);
+  assert.equal(by['16:07'].session.swim_laps, 21);
+  assert.equal(by['16:07'].session.distance_m, 525); // 21구간 × 25m (거리 화면이 없어도)
+  assert.equal(by['17:01'].laps.length, 25);
+  assert.equal(by['17:01'].laps[0].time_sec, 60);
+  assert.equal(by['17:01'].session.distance_m, 625);
+  assert.deepEqual(r.notes, []);
+});

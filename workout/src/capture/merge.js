@@ -82,15 +82,25 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
     if (fits[0]) Object.entries(zones).forEach(([k, v]) => { if (fits[0].fields[k] == null) fits[0].fields[k] = v; });
   }
 
-  // 4) 수영 구간
-  const laps = mergeLapItems(items);
+  // 4) 수영 구간: 하루에 수영을 두 번 하면 구간 화면도 두 벌이라, 올린 순서대로 수영 한 번씩 나눈 뒤 짝짓는다
+  const lapSets = splitLapRuns(items).map(mergeLapItems).filter((l) => l.length);
   const swims = groups.filter((g) => g.sport === 'swim');
-  let lapOwner = null;
-  if (laps.length) {
-    const maxLap = laps[laps.length - 1].lap_no;
-    lapOwner = swims.length === 1 ? swims[0] : swims.find((g) => g.fields.swim_laps === maxLap) ?? null;
+  const lapsOf = new Map(); // 수영 → 그 수영의 구간
+  if (lapSets.length) {
     if (!swims.length) notes.push('수영 구간은 읽었지만 수영 요약이나 전체보기 캡처가 없어 저장할 수 없어요.');
-    else if (!lapOwner) notes.push('수영이 여러 번이라 구간이 어느 수영인지 알 수 없어요. 수영 한 번씩 나눠서 올려주세요.');
+    else if (swims.length === 1 && lapSets.length === 1) lapsOf.set(swims[0], lapSets[0]);
+    else {
+      const left = [...lapSets];
+      // 1) 총 반복 횟수와 마지막 구간 번호가 같은 수영
+      for (const g of swims) {
+        const i = left.findIndex((l) => g.fields.swim_laps != null && l[l.length - 1].lap_no === g.fields.swim_laps);
+        if (i >= 0) lapsOf.set(g, left.splice(i, 1)[0]);
+      }
+      // 2) 남은 수영과 구간 묶음 수가 같으면 시작 시각 순서 = 올린 순서로
+      const rest = swims.filter((g) => !lapsOf.has(g)).sort((a, b) => String(a.fields.start_time ?? '').localeCompare(String(b.fields.start_time ?? '')));
+      if (rest.length && rest.length === left.length) rest.forEach((g, i) => lapsOf.set(g, left[i]));
+      else if (left.length) notes.push('수영이 여러 번이라 일부 구간이 어느 수영인지 알 수 없어요. 저장한 뒤 그 수영 상세에서 \'구간 캡처로 채우기\'로 올려주세요.');
+    }
   }
 
   const sessions = groups.map((g) => {
@@ -117,17 +127,19 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
       source: 'capture',
     };
     if (g.sport === 'swim') {
-      const fix = checkSwimDistance(session, g === lapOwner ? laps : []);
+      const laps = lapsOf.get(g) ?? [];
+      if (session.swim_laps == null && laps.length) session.swim_laps = laps[laps.length - 1].lap_no;
+      const fix = checkSwimDistance(session, laps);
       if (fix) {
         session.distance_m = fix.distance;
         warnings.push(fix.warning);
       }
     }
     let sessionLaps = [];
-    if (g === lapOwner) {
-      sessionLaps = laps.map((l) => ({ session_id: id, ...l }));
-      warnings.push(...lapWarnings(session, laps));
-    } else if (g.sport === 'swim' && !laps.length) {
+    if (lapsOf.has(g)) {
+      sessionLaps = lapsOf.get(g).map((l) => ({ session_id: id, ...l }));
+      warnings.push(...lapWarnings(session, lapsOf.get(g)));
+    } else if (g.sport === 'swim') {
       warnings.push('수영 구간 화면이 없어 페이스·SWOLF·영법별 기록은 비어 있어요.');
     }
     // 칼로리가 운동 시간에 비해 말이 안 되게 크면(예: 92 kcal 옆 숫자가 붙어 92163) 확인 요청
@@ -138,6 +150,23 @@ export function mergeCaptures(items, { today, newId = () => crypto.randomUUID() 
 
   sessions.sort((a, b) => (a.session.date + a.session.start_time).localeCompare(b.session.date + b.session.start_time));
   return { sessions, notes };
+}
+
+// 올린 순서대로 구간 화면을 수영 한 번씩 나눈다: 같은 지표(시간·스트로크)에서 같은 구간 번호가
+// 다른 값으로 다시 나오면 다른 수영이 시작된 것 (같은 수영을 겹쳐 스크롤한 화면은 값이 같다)
+export function splitLapRuns(items) {
+  const runs = [];
+  let cur = null;
+  for (const it of items.filter((i) => i.kind === 'laps')) {
+    const clash = cur && it.rows.some((r) => {
+      const seen = cur.seen.get(`${it.metric}:${r.lap_no}`);
+      return seen != null && seen !== r.value;
+    });
+    if (!cur || clash) runs.push((cur = { items: [], seen: new Map() }));
+    cur.items.push(it);
+    for (const r of it.rows) cur.seen.set(`${it.metric}:${r.lap_no}`, r.value);
+  }
+  return runs.map((r) => r.items);
 }
 
 // 수영 구간: 같은 구간 번호는 합친다 (시간 화면 + 스트로크 화면, 겹치는 스크롤)
