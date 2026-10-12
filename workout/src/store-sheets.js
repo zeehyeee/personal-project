@@ -104,7 +104,8 @@ export function coalesce(queue, op, sendingSeq = null) {
 }
 
 export function createSyncedStore(local, client, storage = globalThis.localStorage) {
-  const status = { online: null, pending: 0, lastSync: null, error: null };
+  // lastSync: 시트에서 마지막으로 읽은 시각 / lastWrite: 시트에 마지막으로 저장 성공한 시각 / lastWriteError: 저장 실패 이유
+  const status = { online: null, pending: 0, lastSync: null, lastWrite: null, lastWriteError: null, error: null };
   const queue = () => { try { return JSON.parse(storage.getItem(PENDING_KEY)) ?? []; } catch { return []; } };
   const setQueue = (q) => { storage.setItem(PENDING_KEY, JSON.stringify(q)); status.pending = q.length; };
   // 보내는 중인 변경(맨 앞)은 건드리지 않고, 아직 대기 중인 변경끼리는 합친다
@@ -121,9 +122,12 @@ export function createSyncedStore(local, client, storage = globalThis.localStora
       sending = op.seq ?? null;
       try {
         await client.send(op);
+        status.lastWrite = new Date();
+        status.lastWriteError = null;
       } catch (err) {
         status.online = false;
         status.error = err.message;
+        status.lastWriteError = err.message;
         return false;
       } finally {
         sending = null;

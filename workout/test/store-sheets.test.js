@@ -190,3 +190,20 @@ test('대기 중인 변경 합치기: 같은 기록은 마지막만, 안 보낸 
   q = coalesce([{ action: 'saveSettings', patch: { a: 1 }, seq: 1 }], { action: 'saveSettings', patch: { b: 2 }, seq: 2 });
   assert.deepEqual(q, [{ action: 'saveSettings', patch: { a: 1, b: 2 }, seq: 1 }]);
 });
+
+test('저장 시각은 시트에 실제로 쓴 때만, 실패하면 이유를 남긴다', async () => {
+  const api = fakeAppsScript();
+  const storage = memoryStorage();
+  const store = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, api.fetchImpl), storage);
+  await store.load();
+  assert.equal(store.status.lastWrite, null); // 읽기만 했으면 저장 시각 없음
+  await store.addSessions([run]);
+  await store.settle();
+  assert.ok(store.status.lastWrite instanceof Date);
+  const reject = async (url, opts) => (opts?.method === 'POST' ? { json: async () => ({ ok: false, error: 'unknown action' }) } : api.fetchImpl(url, opts));
+  const store2 = createSyncedStore(createLocalStore(storage), createSheetClient({ url: 'https://x/exec', token: 't' }, reject), storage);
+  await store2.setLaps(run.id, []);
+  await store2.settle();
+  assert.match(store2.status.lastWriteError, /unknown action/);
+  assert.equal(store2.status.pending, 1);
+});

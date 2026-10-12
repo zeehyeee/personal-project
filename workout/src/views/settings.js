@@ -41,13 +41,17 @@ const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinu
 function sheetSection(state) {
   const s = state.sync ?? {};
   if (s.connected) {
-    const line = s.online
-      ? `연결됨 · 마지막 동기화 ${s.lastSync ? hhmm(new Date(s.lastSync)) : '-'}`
-      : `지금은 연결되지 않았어요${s.error ? ` (${esc(s.error)})` : ''}`;
+    // 읽기(시트 → 앱)와 쓰기(앱 → 시트)를 따로 보여준다. 쓰기 실패는 빨갛게
+    const failed = s.pending && s.lastWriteError;
+    const line = failed
+      ? `시트에 저장하지 못했어요 (${esc(s.lastWriteError)})`
+      : s.online
+        ? `연결됨 · 시트에 저장 ${s.lastWrite ? hhmm(new Date(s.lastWrite)) : '-'} · 시트에서 불러옴 ${s.lastSync ? hhmm(new Date(s.lastSync)) : '-'}`
+        : `지금은 연결되지 않았어요${s.error ? ` (${esc(s.error)})` : ''}`;
     return `
       <section class="card set-card">
         <h2>구글 시트 연결</h2>
-        <p class="sync-line ${s.online ? 'ok' : 'warn'}">${line}</p>
+        <p class="sync-line ${s.online && !failed ? 'ok' : 'warn'}">${line}</p>
         ${s.pending ? `<p class="muted">시트로 아직 보내지 못한 변경 ${s.pending}개 · 다음에 앱을 열 때 다시 보내요</p>` : ''}
         <button class="set-btn danger" data-action="sheet-disconnect">연결 끊기</button>
       </section>`;
