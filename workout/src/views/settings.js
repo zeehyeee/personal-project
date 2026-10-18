@@ -7,7 +7,6 @@ import { DEFAULT_SHEET_URL } from '../store-sheets.js';
 // 설정 항목: [키, 이름, 단위, 최소, 최대, 소수 허용]
 export const SETTING_FIELDS = {
   weight_kg: ['몸무게', 'kg', 25, 250, true],
-  max_hr: ['최대 심박수', 'bpm', 100, 230],
   weekly_active_days_goal: ['주 운동일 목표', '일', 1, 7],
   weekly_minutes_goal: ['주 운동 시간 목표', '분', 10, 2000],
   pool_length_m: ['기본 수영장 길이', 'm', 5, 100, true],
@@ -17,7 +16,7 @@ export const SETTING_FIELDS = {
 
 // 입력값 → 저장할 값 (범위를 벗어나면 null)
 // 비워 두면 되는 항목 (몸무게: 비우면 삼성헬스 칼로리 그대로)
-const OPTIONAL = ['weight_kg', 'max_hr'];
+const OPTIONAL = ['weight_kg'];
 
 export function parseSetting(key, raw) {
   const f = SETTING_FIELDS[key];
@@ -94,11 +93,6 @@ export function renderSettings(state) {
         <h2>칼로리 계산</h2>
         <p class="muted">삼성헬스 칼로리가 크게 나와서, 몸무게를 넣으면 운동 강도(MET) × 몸무게 × 실제 운동 시간으로 다시 계산해요. 수영은 실제로 헤엄친 시간은 수영 강도로, 중간에 쉰 시간은 가벼운 강도로 계산하고, 출발 전·끝난 뒤 대기는 넣지 않아요. 비우면 삼성헬스 값을 그대로 써요.</p>
         ${row(state, 'weight_kg')}
-      </section>
-      <section class="card set-card">
-        <h2>심박 존</h2>
-        <p class="muted">삼성헬스에 설정된 최대 심박수와 같게 넣어 주세요. 존 1~5마다 몇 bpm인지 보여주고, 지난 기록에도 바로 적용돼요.</p>
-        ${row(state, 'max_hr')}
       </section>
       <section class="card set-card">
         <h2>수영</h2>

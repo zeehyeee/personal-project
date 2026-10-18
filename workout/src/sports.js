@@ -30,7 +30,6 @@ export const ZONE_META = {
 export const DEFAULT_SETTINGS = {
   pool_length_m: 25,
   weight_kg: '', // 비우면 삼성헬스 칼로리 그대로
-  max_hr: 178, // 삼성헬스 최대 심박수. 비우면 존 bpm 범위 없이
   swim_rest_multiplier: 2,
   weekly_active_days_goal: 5,
   weekly_minutes_goal: 150,

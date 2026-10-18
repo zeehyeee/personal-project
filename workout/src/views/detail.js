@@ -1,13 +1,12 @@
 // 종목별 상세 화면 (명세 3-4)
 // 위계: 1순위 운동 시간(단독 한 줄, 가장 크게) → 2순위 2~3개 → 3순위 작고 회색
-import { SPORT_META, STROKE_NAMES, ZONE_KEYS } from '../sports.js';
+import { SPORT_META, STROKE_NAMES, ZONE_KEYS, ZONE_META } from '../sports.js';
 import { formatDuration, formatPace } from '../format.js';
 import { flagRestLaps } from '../swim.js';
 import { lapRows, lapEditRows } from './lap-editor.js';
 import { recordsOn } from '../records.js';
 import { esc, ICONS, SPORT_ICON, CONDITIONS, FIN_ICON, dateLabelFull, km, int, dec1, emptyState } from '../ui.js';
 import { hasGear } from '../aggregate.js';
-import { zoneRows, zoneOf, bpmRange } from '../zones.js';
 
 const metric = (label, value, unit = '', input = '') =>
   `<div class="m"><span class="m-value">${input || value}${(input || value !== '-') && unit ? `<small>${unit}</small>` : ''}</span><span class="m-label">${label}</span></div>`;
@@ -138,29 +137,28 @@ export function renderDetail(state, date, sport) {
         ${editId ? '<p class="note inl-hint">숫자를 눌러 바로 고칠 수 있어요</p>' : ''}
       </section>
       ${noteSection(state, day)}
-      ${zoneSection(day, state.db.settings)}
+      ${zoneSection(day)}
       ${strokeSection(day)}
       ${lapSection(state, day)}
       ${sessionList(state, day)}
     </div>`;
 }
 
-// 운동 강도: 삼성헬스 심박 구간을 존 1~5로. 최대 심박수가 있으면 존마다 bpm 범위도. 강도 합보다 운동 시간이 길면 나머지는 존 1
-function zoneSection(day, settings) {
-  if (!ZONE_KEYS.some((k) => day[k] > 0)) return '';
-  const rows = zoneRows(day, settings);
+// 운동 강도: 삼성헬스 심박 구간별 시간. 강도 합보다 운동 시간이 길면 나머지는 '그 외'
+function zoneSection(day) {
+  const zones = ZONE_KEYS.filter((k) => day[k] > 0).map((k) => ({ ...ZONE_META[k], min: day[k] }));
+  if (!zones.length) return '';
+  const total = Math.max(day.zone_duration_sec / 60, zones.reduce((a, z) => a + z.min, 0));
   const partial = day.zone_sessions < day.sessionCount;
-  const z2 = rows.find((r) => r.zone === 2);
-  const hard = rows.filter((r) => r.zone >= 4).reduce((a, r) => ({ min: a.min + r.min, pct: a.pct + r.pct }), { min: 0, pct: 0 });
-  const avgZone = zoneOf(day.avg_hr, settings);
-  const shown = rows.filter((r) => r.min > 0 || r.zone >= 2);
+  const rest = Math.max(0, Math.round(total - zones.reduce((a, z) => a + z.min, 0)));
+  const all = rest ? [...zones, { name: '그 외', color: 'var(--grey-200)', min: rest }] : zones;
+  const hard = zones.filter((z) => z.name !== '중강도' && z.name !== '저강도').reduce((a, z) => a + z.min, 0);
   return `
     <section class="card">
-      <h2>심박 존</h2>
-      <p class="muted">${avgZone ? `평균 ${int(day.avg_hr)}&nbsp;bpm은 존&nbsp;${avgZone} · ` : ''}존&nbsp;4 이상 ${hard.pct}% · 존&nbsp;2 ${z2.min}분${partial ? ` · ${day.sessionCount}세션 중 ${day.zone_sessions}세션 기준` : ''}</p>
-      <div class="zone-bar">${rows.filter((r) => r.min > 0).map((r) => `<i style="flex:${r.min}; background:${r.color}"></i>`).join('')}</div>
-      <ul class="sub zone-list">${shown.map((r) => `<li${r.min ? '' : ' class="zero"'}><span><i class="zdot" style="background:${r.color}"></i><b>존 ${r.zone}</b> ${r.name}${bpmRange(r) ? `<small>${bpmRange(r)} bpm</small>` : ''}</span><span>${r.min}분<small>${r.pct}%</small></span></li>`).join('')}</ul>
-      ${settings?.max_hr ? `<p class="note">최대 심박수 ${int(settings.max_hr)} bpm 기준 · 삼성헬스 구간(최대의 60·70·80·90%)과 같아요</p>` : '<p class="note">설정에 최대 심박수를 넣으면 존마다 bpm 범위가 보여요</p>'}
+      <h2>운동 강도</h2>
+      <p class="muted">${hard ? `고강도 이상 ${hard}분 · 운동 시간의 ${Math.round((hard / total) * 100)}%` : '심박 구간별 시간'}${partial ? ` · ${day.sessionCount}세션 중 ${day.zone_sessions}세션 기준` : ''}</p>
+      <div class="zone-bar">${all.map((z) => `<i style="flex:${z.min}; background:${z.color}"></i>`).join('')}</div>
+      <ul class="sub zone-list">${all.map((z) => `<li><span><i class="zdot" style="background:${z.color}"></i>${z.name}</span><span>${z.min}분</span></li>`).join('')}</ul>
     </section>`;
 }
 
